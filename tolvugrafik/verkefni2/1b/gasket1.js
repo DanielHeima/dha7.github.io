@@ -39,11 +39,31 @@ window.onload = function init()
     // Each new point is located midway between
     // last point and a randomly chosen vertex
 
+    // for ( var i = 0; points.length < NumPoints; ++i ) {
+    //     var j = Math.floor(Math.random() * 3);
+    //     p = add( points[i], vertices[j] );
+    //     p = scale( 0.5, p );
+    //     points.push( p );
+    // }
+
     for ( var i = 0; points.length < NumPoints; ++i ) {
-        var j = Math.floor(Math.random() * 3);
-        p = add( points[i], vertices[j] );
-        p = scale( 0.5, p );
-        points.push( p );
+      
+      // random heiltala frá 0 upp í 19
+      let rand = Math.floor(Math.random() * 20);
+      
+      let j;
+      if (rand < 18) {
+        j = 0;
+      } else if (rand == 18) {
+        j = 1;
+      } else {
+        // rand er 19
+        j = 2;
+      }
+      
+      p = add( points[i], vertices[j] );
+      p = scale( 0.5, p );
+      points.push( p );
     }
 
     //
