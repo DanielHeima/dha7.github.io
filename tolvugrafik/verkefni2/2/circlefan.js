@@ -14,6 +14,7 @@ var numCirclePoints = 20;
 var radius = 0.4;
 var center = vec2(0, 0);
 
+
 var points = [];
 
 window.onload = function init() {
@@ -33,7 +34,7 @@ window.onload = function init() {
     gl.useProgram( program );
     
 	// Create the circle
-    points.push( center );
+    //points.push( center );
     createCirclePoints( center, radius, numCirclePoints );
 
     var vBuffer = gl.createBuffer();
@@ -51,11 +52,16 @@ window.onload = function init() {
 // Create the points of the circle
 function createCirclePoints( cent, rad, k )
 {
-    var dAngle = 2*Math.PI/k;
-    for( i=k; i>=0; i-- ) {
-    	a = i*dAngle;
-    	var p = vec2( rad*Math.sin(a) + cent[0], rad*Math.cos(a) + cent[1] );
-    	points.push(p);
+    let dAngle = 2*Math.PI/k;
+    for( i=k; i>0; i-- ) {
+    	let a = i*dAngle;
+    	let b = (i-1)*dAngle;
+    	let p1 = vec2( rad*Math.sin(a) + cent[0], rad*Math.cos(a) + cent[1] );
+    	let p2 = vec2( rad*Math.sin(b) + cent[0], rad*Math.cos(b) + cent[1] );
+    	points.push(cent);
+    	points.push(p1);
+    	points.push(p2);
+
     }
 }
 
@@ -63,8 +69,8 @@ function render() {
     
     gl.clear( gl.COLOR_BUFFER_BIT );
     
-    // Draw circle using Triangle Fan
-    gl.drawArrays( gl.TRIANGLE_FAN, 0, numCirclePoints+2 );
+    // Draw circle using Triangles
+    gl.drawArrays( gl.TRIANGLES, 0, numCirclePoints*3 );
 
     window.requestAnimFrame(render);
 }
