@@ -48,7 +48,6 @@ window.onload = function init() {
     render();
 }
 
-
 // Create the points of the circle
 function createCirclePoints( cent, rad, k )
 {
