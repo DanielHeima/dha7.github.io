@@ -47,6 +47,9 @@ class Mario {
       this.pos[0] += this.velX;
       this.right = true;
     }
+    if (eatKey(' '.charCodeAt())) {
+      this.velY = 0.05;
+    }
 
     if (!this.right) {
       this.vertices = this.vertLeft;
@@ -54,7 +57,7 @@ class Mario {
       this.vertices = this.vertRight
     }
     //this.pos[0] += this.velX;
-    //this.pos[1] += this.velY;
+    this.pos[1] += this.velY;
   }
 
   render() {
@@ -62,6 +65,15 @@ class Mario {
     gl.bufferData( gl.ARRAY_BUFFER, flatten(this.vertices), gl.DYNAMIC_DRAW );
     gl.uniform2fv( locBox, flatten(this.pos) );
     gl.drawArrays( gl.TRIANGLES, 0, 3 );
+  }
+}
+
+function eatKey(key) {
+  if(gl_keys[key]) {
+    gl_keys[key] = false;
+    return true;
+  } else {
+    return false;
   }
 }
 
@@ -75,7 +87,7 @@ window.onload = function init() {
     gl.viewport( 0, 0, canvas.width, canvas.height );
     gl.clearColor( 1.0, 0.9, 1.0, 1.0 );
 
-    mario = new Mario(0, -0.8, 0.01, 0.01);
+    mario = new Mario(0, -0.8, 0.01, 0.0);
     
     // Gefa ferningnum slembistefnu � upphafi
     //dX = Math.random()*0.1-0.05;
