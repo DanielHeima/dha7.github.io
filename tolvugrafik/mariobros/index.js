@@ -27,8 +27,8 @@ class Mario {
     this.vertices = new Float32Array([-0.05, -0.05, -0.05, 0.05, 0.05, 0.0]);
   }
 
-  vertRight = new Float32Array([-0.05, -0.05, -0.05, 0.05, 0.05, 0.0]);
-  vertLeft = new Float32Array([0.05, 0.05, 0.05, -0.05, -0.05, 0.0]);
+  vertRight = new Float32Array([-0.1, -0.1, -0.1, 0.1, 0.1, 0.0]);
+  vertLeft = new Float32Array([0.1, 0.1, 0.1, -0.1, -0.1, 0.0]);
   //color = new Float32Array([0.0, 0.0, 1.0, 1.0,
   //                          0.0, 0.0, 1.0, 1.0,
   //                          0.0, 0.0, 1.0, 1.0,
@@ -72,10 +72,10 @@ class Mario {
     if (this.jumping) this.velY -= 0.001;
 
     // collide
-    if (this.pos[1] <  -0.9) { 
+    if (this.pos[1] <  -0.8) { 
       this.jumping = false;
       this.velY = 0;
-      this.pos[1] = -0.9;
+      this.pos[1] = -0.8;
     }
 
   
@@ -116,9 +116,21 @@ class Box  {
   }
 }
 
+// TODO:
+// stækka maríus
+// láta ground erfa frá box
+/* gullmolar
+      tímabundnir, á slembistað
+      fleiri en einn í einu
+      stig
+      
+*/
+// skrímsli
+//
+
 class Ground  {
   constructor() {
-    this.pos = vec2(0.0, -1.0)
+    this.pos = vec2(0.0, -0.95)
     this.vertices = new Float32Array([-1.0, -0.05, 
                                       -1.0, 0.05, 
                                       1.0, 0.05,
