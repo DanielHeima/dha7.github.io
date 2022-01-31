@@ -65,7 +65,7 @@ class Mario {
 
     if (!this.jumping && (eatKey('W'.charCodeAt())||eatKey(' '.charCodeAt()))) {
        this.jumping = true;
-       this.velY = 0.03;
+       this.velY = 0.05;
     }
 
     // gravity
@@ -76,6 +76,12 @@ class Mario {
       this.jumping = false;
       this.velY = 0;
       this.pos[1] = -0.8;
+    }
+    if (this.pos[0] < -0.9) {
+      this.pos[0] = -0.9;
+    }
+    if (this.pos[0] > 0.9) {
+      this.pos[0] = 0.9;
     }
 
   
@@ -98,14 +104,14 @@ class Mario {
 class Box  {
   constructor(x, y) {
     this.pos = vec2(x, y)
-    this.vertices = new Float32Array([-1.0, -0.05, 
-                                      -1.0, 0.05, 
-                                      1.0, 0.05,
-                                      1.0, 0.05,
-                                      -1.0, -0.05, 
-                                      1.0, -0.05,
-                                    ]);
   }
+  vertices = new Float32Array([-1.0, -0.05, 
+    -1.0, 0.05, 
+    1.0, 0.05,
+    1.0, 0.05,
+    -1.0, -0.05, 
+    1.0, -0.05,
+  ]);
   color = vec4(0.0, 0.8, 0.0, 1.0);
   render() {
     gl.bindBuffer( gl.ARRAY_BUFFER, groundBuffer);   
@@ -128,25 +134,19 @@ class Box  {
 // skrímsli
 //
 
-class Ground  {
-  constructor() {
-    this.pos = vec2(0.0, -0.95)
-    this.vertices = new Float32Array([-1.0, -0.05, 
-                                      -1.0, 0.05, 
-                                      1.0, 0.05,
-                                      1.0, 0.05,
-                                      -1.0, -0.05, 
-                                      1.0, -0.05,
-                                    ]);
+class Ground extends Box {
+  constructor(x, y) {
+    super(x,y);
+    this.pos = vec2(x,y);
   }
+  vertices = new Float32Array([-1.0, -0.05, 
+    -1.0, 0.05, 
+    1.0, 0.05,
+    1.0, 0.05,
+    -1.0, -0.05, 
+    1.0, -0.05,
+  ]);
   color = vec4(0.0, 0.8, 0.0, 1.0);
-  render() {
-    gl.bindBuffer( gl.ARRAY_BUFFER, groundBuffer);   
-    gl.vertexAttribPointer( positionLocation, 2, gl.FLOAT, false, 0, 0 );
-    gl.uniform2fv( position, flatten(this.pos) );
-    gl.uniform4fv( colorLocation, flatten(this.color) );
-    gl.drawArrays( gl.TRIANGLES, 0, 6);
-  }
 }
 
 // keypress has effect only once
@@ -169,7 +169,7 @@ window.onload = function init() {
     gl.viewport( 0, 0, canvas.width, canvas.height );
     gl.clearColor( 0.0, 1.0, 1.0, 1.0 );
 
-    ground = new Ground();
+    ground = new Ground(0.0, -0.95);
     mario = new Mario(0, -0.9, 0.0, 0.0);
     
     
