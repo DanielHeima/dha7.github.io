@@ -29,10 +29,11 @@ class Mario {
 
   vertRight = new Float32Array([-0.05, -0.05, -0.05, 0.05, 0.05, 0.0]);
   vertLeft = new Float32Array([0.05, 0.05, 0.05, -0.05, -0.05, 0.0]);
-  color = new Float32Array([0.0, 0.0, 1.0, 1.0,
-                            0.0, 0.0, 1.0, 1.0,
-                            0.0, 0.0, 1.0, 1.0,
-                          ] );
+  //color = new Float32Array([0.0, 0.0, 1.0, 1.0,
+  //                          0.0, 0.0, 1.0, 1.0,
+  //                          0.0, 0.0, 1.0, 1.0,
+  //                        ] );
+  color = vec4(0.0, 0.0, 1.0, 1.0);
   
   init() {
     // Load the data into the GPU
@@ -88,29 +89,51 @@ class Mario {
     gl.bufferData( gl.ARRAY_BUFFER, flatten(this.vertices), gl.DYNAMIC_DRAW );
     gl.uniform2fv( position, flatten(this.pos) );
     gl.vertexAttribPointer( positionLocation, 2, gl.FLOAT, false, 0, 0 );
+    gl.uniform4fv( colorLocation, flatten(this.color) );
     gl.drawArrays( gl.TRIANGLES, 0, 3);
 
   }
 }
 
-class Ground {
-  constructor() {
-    this.pos = vec2(0.0, -0.8)
-    this.vertices = new Float32Array([-0.9, -0.05, 
-                                      -0.9, 0.05, 
-                                      0.9, 0.05,
-                                      0.9, 0.05,
-                                      -0.9, -0.05, 
-                                      0.9, -0.05,
+class Box  {
+  constructor(x, y) {
+    this.pos = vec2(x, y)
+    this.vertices = new Float32Array([-1.0, -0.05, 
+                                      -1.0, 0.05, 
+                                      1.0, 0.05,
+                                      1.0, 0.05,
+                                      -1.0, -0.05, 
+                                      1.0, -0.05,
                                     ]);
   }
+  color = vec4(0.0, 0.8, 0.0, 1.0);
   render() {
-    //gl.bufferData( gl.ARRAY_BUFFER, flatten(this.vertices), gl.DYNAMIC_DRAW );
-    //
     gl.bindBuffer( gl.ARRAY_BUFFER, groundBuffer);   
-    gl.uniform2fv( position, flatten(this.pos) );
     gl.vertexAttribPointer( positionLocation, 2, gl.FLOAT, false, 0, 0 );
-    gl.drawArrays( gl.TRIANGLES, 0, 3);
+    gl.uniform2fv( position, flatten(this.pos) );
+    gl.uniform4fv( colorLocation, flatten(this.color) );
+    gl.drawArrays( gl.TRIANGLES, 0, 6);
+  }
+}
+
+class Ground  {
+  constructor() {
+    this.pos = vec2(0.0, -1.0)
+    this.vertices = new Float32Array([-1.0, -0.05, 
+                                      -1.0, 0.05, 
+                                      1.0, 0.05,
+                                      1.0, 0.05,
+                                      -1.0, -0.05, 
+                                      1.0, -0.05,
+                                    ]);
+  }
+  color = vec4(0.0, 0.8, 0.0, 1.0);
+  render() {
+    gl.bindBuffer( gl.ARRAY_BUFFER, groundBuffer);   
+    gl.vertexAttribPointer( positionLocation, 2, gl.FLOAT, false, 0, 0 );
+    gl.uniform2fv( position, flatten(this.pos) );
+    gl.uniform4fv( colorLocation, flatten(this.color) );
+    gl.drawArrays( gl.TRIANGLES, 0, 6);
   }
 }
 
@@ -146,16 +169,15 @@ window.onload = function init() {
     
     // uniform
     position = gl.getUniformLocation( program, "pos" );
+    colorLocation = gl.getUniformLocation( program, "vColor" );
 
     //attributes:
-    // Associate out shader variables with our data buffer
     positionLocation = gl.getAttribLocation( program, "vPosition" );
-    colorLocation = gl.getAttribLocation( program, "vColor" );
 
     // buffers:
     marioBuffer = gl.createBuffer();
     groundBuffer = gl.createBuffer();
-    colorBuffer = gl.createBuffer();
+    //colorBuffer = gl.createBuffer();
 
     gl.bindBuffer( gl.ARRAY_BUFFER, marioBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(mario.vertices), gl.DYNAMIC_DRAW );
@@ -165,15 +187,16 @@ window.onload = function init() {
 
     gl.bindBuffer( gl.ARRAY_BUFFER, groundBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(ground.vertices), gl.DYNAMIC_DRAW );
+    
 //
-    gl.enableVertexAttribArray( positionLocation );
-    gl.vertexAttribPointer( positionLocation, 2, gl.FLOAT, false, 0, 0 );
+    //gl.enableVertexAttribArray( positionLocation );
+    //gl.vertexAttribPointer( positionLocation, 2, gl.FLOAT, false, 0, 0 );
 
-    gl.bindBuffer( gl.ARRAY_BUFFER, colorBuffer );
-    gl.bufferData( gl.ARRAY_BUFFER, flatten(mario.color), gl.STATIC_DRAW );
-
-    gl.enableVertexAttribArray( colorLocation );
-    gl.vertexAttribPointer( colorLocation, 4, gl.FLOAT, false, 0, 0 );
+    //gl.bindBuffer( gl.ARRAY_BUFFER, colorBuffer );
+    //gl.bufferData( gl.ARRAY_BUFFER, flatten(mario.color), gl.STATIC_DRAW );
+//
+    // gl.enableVertexAttribArray( colorLocation );
+    // gl.vertexAttribPointer( colorLocation, 4, gl.FLOAT, false, 0, 0 );
 
     // Meðhöndlun lykla
     window.addEventListener("keydown", function(e){

@@ -6,17 +6,12 @@
 
 uniform vec2 pos;
 attribute vec4 vPosition;
-attribute vec4 vColor;
-
-varying vec4 fColor;
 
 void main()
 {
     vec4 t = vPosition;    
     t.xy += pos;
-    
-    fColor = vColor;
-
+  
     gl_Position = t;
 
 }
@@ -26,11 +21,12 @@ void main()
 
 precision mediump float;
 
-varying vec4 fColor;
+uniform vec4 vColor;
+
 void
 main()
 {
-    gl_FragColor = fColor;
+    gl_FragColor = vColor;
 }
 </script>
 
