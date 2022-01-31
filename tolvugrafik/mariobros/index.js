@@ -1,23 +1,28 @@
+import "./src/mario.js";
 var canvas;
 var gl;
 
 var g_keys = [];
 
 let mario;
+let ground;
+
+
 let position;
 
 let colorLocation;
 let positionLocation;
 
-let cBuffer;
-let vBuffer;
+let colorBuffer;
+let groundBuffer;
+let marioBuffer;
 
 class Mario {
   right = true;
   jumping = false;
-  constructor(x, y, velX, velY) {
+  constructor(x, y, velX = 0, velY = 0) {
     this.pos = vec2(x, y);
-    this.velX = 0.00;
+    this.velX = 0.0;
     this.velY = velY;
     this.vertices = new Float32Array([-0.05, -0.05, -0.05, 0.05, 0.05, 0.0]);
   }
@@ -26,7 +31,7 @@ class Mario {
   vertLeft = new Float32Array([0.05, 0.05, 0.05, -0.05, -0.05, 0.0]);
   color = new Float32Array([0.0, 0.0, 1.0, 1.0,
                             0.0, 0.0, 1.0, 1.0,
-                            0.0, 0.0, 1.0, 1.0
+                            0.0, 0.0, 1.0, 1.0,
                           ] );
   
   init() {
@@ -57,7 +62,7 @@ class Mario {
     }
 
 
-    if (!this.jumping && eatKey('W'.charCodeAt())||eatKey(' '.charCodeAt())) {
+    if (!this.jumping && (eatKey('W'.charCodeAt())||eatKey(' '.charCodeAt()))) {
        this.jumping = true;
        this.velY = 0.03;
     }
@@ -79,14 +84,34 @@ class Mario {
   }
 
   render() {
-    gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer);   
+    gl.bindBuffer( gl.ARRAY_BUFFER, marioBuffer);   
     gl.bufferData( gl.ARRAY_BUFFER, flatten(this.vertices), gl.DYNAMIC_DRAW );
     gl.uniform2fv( position, flatten(this.pos) );
+    gl.vertexAttribPointer( positionLocation, 2, gl.FLOAT, false, 0, 0 );
+    gl.drawArrays( gl.TRIANGLES, 0, 3);
+
   }
 }
 
 class Ground {
-
+  constructor() {
+    this.pos = vec2(0.0, -0.8)
+    this.vertices = new Float32Array([-0.9, -0.05, 
+                                      -0.9, 0.05, 
+                                      0.9, 0.05,
+                                      0.9, 0.05,
+                                      -0.9, -0.05, 
+                                      0.9, -0.05,
+                                    ]);
+  }
+  render() {
+    //gl.bufferData( gl.ARRAY_BUFFER, flatten(this.vertices), gl.DYNAMIC_DRAW );
+    //
+    gl.bindBuffer( gl.ARRAY_BUFFER, groundBuffer);   
+    gl.uniform2fv( position, flatten(this.pos) );
+    gl.vertexAttribPointer( positionLocation, 2, gl.FLOAT, false, 0, 0 );
+    gl.drawArrays( gl.TRIANGLES, 0, 3);
+  }
 }
 
 // keypress has effect only once
@@ -109,12 +134,10 @@ window.onload = function init() {
     gl.viewport( 0, 0, canvas.width, canvas.height );
     gl.clearColor( 0.0, 1.0, 1.0, 1.0 );
 
+    ground = new Ground();
     mario = new Mario(0, -0.9, 0.0, 0.0);
     
-    // Gefa ferningnum slembistefnu � upphafi
-    //dX = Math.random()*0.1-0.05;
-    //dY = Math.random()*0.1-0.05;
-
+    
     //
     //  Load shaders and initialize attribute buffers
     //
@@ -130,18 +153,23 @@ window.onload = function init() {
     colorLocation = gl.getAttribLocation( program, "vColor" );
 
     // buffers:
-    // position
-    vBuffer = gl.createBuffer();
-    // color
-    cBuffer = gl.createBuffer();
+    marioBuffer = gl.createBuffer();
+    groundBuffer = gl.createBuffer();
+    colorBuffer = gl.createBuffer();
 
-    gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
+    gl.bindBuffer( gl.ARRAY_BUFFER, marioBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(mario.vertices), gl.DYNAMIC_DRAW );
 
     gl.enableVertexAttribArray( positionLocation );
     gl.vertexAttribPointer( positionLocation, 2, gl.FLOAT, false, 0, 0 );
 
-    gl.bindBuffer( gl.ARRAY_BUFFER, cBuffer );
+    gl.bindBuffer( gl.ARRAY_BUFFER, groundBuffer );
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(ground.vertices), gl.DYNAMIC_DRAW );
+//
+    gl.enableVertexAttribArray( positionLocation );
+    gl.vertexAttribPointer( positionLocation, 2, gl.FLOAT, false, 0, 0 );
+
+    gl.bindBuffer( gl.ARRAY_BUFFER, colorBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(mario.color), gl.STATIC_DRAW );
 
     gl.enableVertexAttribArray( colorLocation );
@@ -176,6 +204,6 @@ function update() {
 
 function render() {
   gl.clear( gl.COLOR_BUFFER_BIT );  
+  ground.render();
   mario.render();
-  gl.drawArrays( gl.TRIANGLES, 0, 3);
 }
