@@ -6,6 +6,8 @@ var g_keys = [];
 
 let mario;
 let ground;
+let gold = [];
+let obsticles = [];
 
 
 let position;
@@ -16,6 +18,7 @@ let positionLocation;
 let colorBuffer;
 let groundBuffer;
 let marioBuffer;
+let goldBuffer;
 
 class Mario {
   right = true;
@@ -106,11 +109,11 @@ class Box  {
     this.pos = vec2(x, y)
   }
   vertices = new Float32Array([-1.0, -0.05, 
-    -1.0, 0.05, 
-    1.0, 0.05,
-    1.0, 0.05,
-    -1.0, -0.05, 
-    1.0, -0.05,
+    -0.5, 0.05, 
+    0.5, 0.05,
+    0.5, 0.05,
+    -0.5, -0.05, 
+    0.5, -0.05,
   ]);
   color = vec4(0.0, 0.8, 0.0, 1.0);
   render() {
@@ -134,10 +137,9 @@ class Box  {
 // skrímsli
 //
 
-class Ground extends Box {
+class Ground {
   constructor(x, y) {
-    super(x,y);
-    this.pos = vec2(x,y);
+    this.pos = vec2(x, y);  
   }
   vertices = new Float32Array([-1.0, -0.05, 
     -1.0, 0.05, 
@@ -147,6 +149,40 @@ class Ground extends Box {
     1.0, -0.05,
   ]);
   color = vec4(0.0, 0.8, 0.0, 1.0);
+  render() {
+    gl.bindBuffer( gl.ARRAY_BUFFER, groundBuffer);   
+    gl.vertexAttribPointer( positionLocation, 2, gl.FLOAT, false, 0, 0 );
+    gl.uniform2fv( position, flatten(this.pos) );
+    gl.uniform4fv( colorLocation, flatten(this.color) );
+    gl.drawArrays( gl.TRIANGLES, 0, 6);
+  }
+}
+
+class Gold {
+  constructor() {
+    let x = Math.random()*2-1;
+    let y = Math.random()*0.5+0.3;
+    this.pos = vec2(x, y);
+    gl.bindBuffer( gl.ARRAY_BUFFER, goldBuffer);   
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(this.vertices), gl.DYNAMIC_DRAW );
+  }
+  vertices = new Float32Array([
+    -0.05, -0.05, 
+    -0.05, 0.05, 
+    0.05, 0.05,
+    0.05, 0.05,
+    -0.05, -0.05, 
+    0.05, -0.05,
+  ]);
+  color = vec4(1.0, 1.0, 0.0, 1.0);
+  render() {
+    gl.bindBuffer( gl.ARRAY_BUFFER, goldBuffer);   
+    gl.vertexAttribPointer( positionLocation, 2, gl.FLOAT, false, 0, 0 );
+    gl.uniform2fv( position, flatten(this.pos) );
+    gl.uniform4fv( colorLocation, flatten(this.color) );
+    gl.drawArrays( gl.TRIANGLES, 0, 6);
+  }
+
 }
 
 // keypress has effect only once
@@ -189,6 +225,7 @@ window.onload = function init() {
     // buffers:
     marioBuffer = gl.createBuffer();
     groundBuffer = gl.createBuffer();
+    goldBuffer = gl.createBuffer();
     //colorBuffer = gl.createBuffer();
 
     gl.bindBuffer( gl.ARRAY_BUFFER, marioBuffer );
@@ -222,8 +259,13 @@ window.onload = function init() {
     updateSimulation();
 }
 
-
+setInterval(()=> {
+  if (Math.random() < 0.01) { 
+    gold.push(new Gold());
+  }
+}, 50);
 function updateSimulation() {
+
     
     update();
     render();
@@ -240,5 +282,9 @@ function update() {
 function render() {
   gl.clear( gl.COLOR_BUFFER_BIT );  
   ground.render();
+  for (let dude of gold) {
+    dude.render();
+  }
+
   mario.render();
 }
