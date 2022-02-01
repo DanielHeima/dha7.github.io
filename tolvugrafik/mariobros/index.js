@@ -399,7 +399,6 @@ function resetSimulation() {
   score = 0;
   scoreBars = [];
   gold = [];
-  updateSimulation();
 }
 
 function finalText(str) {
