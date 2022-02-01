@@ -1,5 +1,8 @@
 body {
   margin: 1em auto;
+  /*display: flex;
+  justify-content: center;*/
   display: flex;
-  justify-content: center;
+  max-width: 512px;
+  flex-direction: column;
 }

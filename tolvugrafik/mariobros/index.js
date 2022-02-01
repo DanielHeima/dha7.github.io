@@ -10,7 +10,6 @@ let gold = [];
 let obsticles = [];
 
 let position;
-
 let colorLocation;
 let positionLocation;
 
@@ -18,8 +17,12 @@ let groundBuffer;
 let marioBuffer;
 let goldBuffer;
 let obsticleBuffer;
+let scoreBarBuffer;
 
 let score = 0;
+let scoreBars = [];
+
+let running = true;
 
 class Mario {
   right = true;
@@ -84,7 +87,7 @@ class Mario {
 
       // y
       // collide with obsticle from above
-      if (dude.leftX < nextX && dude.rightX > nextX)
+      if (dude.leftX < nextX+0.1 && dude.rightX > nextX-0.1)
         if (this.pos[1]-0.1 > dude.upperY && nextY-0.1 < dude.upperY) {
           this.velY = 0;
           this.jumping = false;
@@ -99,6 +102,7 @@ class Mario {
           && this.pos[1]-0.1 < dude.upperY && this.pos[1]+0.1 > dude.lowerY) {
             score++;
             gold.splice(i, 1)
+            scoreBars.push(new ScoreBar(score));
           }
     }
 
@@ -127,9 +131,14 @@ class Mario {
     }
 
 
-    if (!this.jumping && (eatKey('W'.charCodeAt())||eatKey(' '.charCodeAt()))) {
+    if (running && !this.jumping && (eatKey('W'.charCodeAt())||eatKey(' '.charCodeAt()))) {
        this.jumping = true;
        this.velY = 0.08;
+    }
+
+    if (!this.jumping && (eatKey('R'.charCodeAt()))) {
+      // reset position
+      this.resetPosition();
     }
 
     // apply gravity
@@ -152,6 +161,17 @@ class Mario {
     gl.drawArrays( gl.TRIANGLES, 0, 3);
 
   }
+
+  reset() {
+    this.resetPosition();
+    this.velX = 0;
+    this.velY = 0;
+  }
+
+  resetPosition() {
+    this.pos[0] = 0.0;
+    this.pos[1] = 0.0;
+  }
 }
 
 // TODO:
@@ -163,6 +183,31 @@ class Mario {
 */
 // skrímsli
 //
+class ScoreBar {
+  constructor(s) {
+    let x = -0.9+0.1*s;
+    let y = 0.8
+    this.pos = vec2(x, y);
+    gl.bindBuffer( gl.ARRAY_BUFFER, scoreBarBuffer);   
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(this.vertices), gl.DYNAMIC_DRAW );
+  }
+  vertices = new Float32Array([
+    -0.01, -0.05, 
+    -0.01, 0.05, 
+    0.01, 0.05,
+    0.01, 0.05,
+    -0.01, -0.05, 
+    0.01, -0.05,
+  ]);
+  color = vec4(1.0, 0.2, 0.9, 1.0);
+  render() {
+    gl.bindBuffer( gl.ARRAY_BUFFER, scoreBarBuffer);   
+    gl.vertexAttribPointer( positionLocation, 2, gl.FLOAT, false, 0, 0 );
+    gl.uniform2fv( position, flatten(this.pos) );
+    gl.uniform4fv( colorLocation, flatten(this.color) );
+    gl.drawArrays( gl.TRIANGLES, 0, 6);
+  }
+}
 
 class Ground {
   constructor(x, y) {
@@ -230,7 +275,7 @@ class Obsticle {
       0.1+this.factorX, -0.1-this.factorY,
     ]);
     let x = Math.random()*2-1;
-    while(Math.abs(x)<0.4 || Math.abs(x)>0.8) {
+    while(Math.abs(x)<0.3 || Math.abs(x)>0.9) {
       x = Math.random()*2-1;
     }
     let y = -0.8;
@@ -293,9 +338,10 @@ window.onload = function init() {
     groundBuffer = gl.createBuffer();
     goldBuffer = gl.createBuffer();
     obsticleBuffer = gl.createBuffer();
+    scoreBarBuffer = gl.createBuffer();
 
     ground = new Ground(0.0, -0.95);
-    mario = new Mario(0, -0.8, 0.0, 0.0);
+    mario = new Mario(0, 0.0, 0.0, 0.0);
 
     gl.enableVertexAttribArray( positionLocation );
     gl.vertexAttribPointer( positionLocation, 2, gl.FLOAT, false, 0, 0 );
@@ -321,41 +367,63 @@ window.onload = function init() {
 
 setInterval(()=> {
   if (gold.length < 4) {
-    if (Math.random() < 0.1) { 
+    if (Math.random() < 0.02) { 
       gold.push(new Gold());
     }
   }
-}, 1);
+}, 50);
 function updateSimulation() {
     
-    update();
-    render();
+    if(running) {
+      update();
+      render();
+    }
+
+    if (score >= 10) {
+      finalText("You Won! Press Space to play again.");
+      running = false;
+    }
+
+    if (!running) {
+      if (g_keys[' '.charCodeAt()]) {
+        running = true;
+        resetSimulation();
+      }
+    }
     
     window.requestAnimFrame(updateSimulation);
+}
+
+function resetSimulation() {
+  mario.reset();
+  score = 0;
+  scoreBars = [];
+  gold = [];
+  updateSimulation();
+}
+
+function finalText(str) {
+  document.getElementById("output").innerHTML = str;
 }
 
 function update() {
   
   mario.update();
-  /*
-  for (let dude of gold) {
-    dude.update();
-  }a
-  for (let dude of obsticles) {
-    dude.update();
-  }
-  */
-
+  document.getElementById("output").innerHTML = "Your Score: " + score;
+  
 }
 
 function render() {
   gl.clear( gl.COLOR_BUFFER_BIT );  
   ground.render();
-  for (let dude of gold) {
-    dude.render();
+  for (let g of gold) {
+    g.render();
   }
-  for (let dude of obsticles) {
-    dude.render();
+  for (let o of obsticles) {
+    o.render();
+  }
+  for (let s of scoreBars) {
+    s.render();
   }
 
   mario.render();
