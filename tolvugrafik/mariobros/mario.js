@@ -1,4 +1,3 @@
-import "./src/mario.js";
 var canvas;
 var gl;
 
@@ -196,15 +195,6 @@ class Mario {
   }
 }
 
-// TODO:
-/* gullmolar
-      tímabundnir, á slembistað
-      fleiri en einn í einu
-      stig
-      
-*/
-// skrímsli
-//
 class ScoreBar {
   constructor(s) {
     let x = -0.9+0.1*s;
