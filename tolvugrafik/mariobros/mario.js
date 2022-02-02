@@ -1,7 +1,8 @@
-var canvas;
-var gl;
+let canvas;
+let gl;
 
-var g_keys = [];
+let g_keys = [];
+let program;
 
 let mario;
 let ground;
@@ -381,7 +382,7 @@ window.onload = function init() {
   //
   //  Load shaders and initialize attribute buffers
   //
-  var program = initShaders(gl, "vertex-shader", "fragment-shader");
+  program = initShaders(gl, "vertex-shader", "fragment-shader");
   gl.useProgram(program);
 
   // uniform
