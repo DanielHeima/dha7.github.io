@@ -8,6 +8,7 @@ let mario;
 let ground;
 let gold = [];
 let obsticles = [];
+let monsters = [];
 
 let position;
 let colorLocation;
@@ -18,6 +19,7 @@ let marioBuffer;
 let goldBuffer;
 let obsticleBuffer;
 let scoreBarBuffer;
+let monsterBuffer;
 
 let score = 0;
 let scoreBars = [];
@@ -46,6 +48,7 @@ class Mario {
   //                          0.0, 0.0, 1.0, 1.0,
   //                        ] );
   color = vec4(0.0, 0.0, 1.0, 1.0);
+  dead = false;
   
   init() {
     // Load the data into the GPU
@@ -97,15 +100,33 @@ class Mario {
     // get the gold
     for (let i = gold.length-1; i>=0; i--) {
       let dude = gold[i];
-      //x og y
-      if (this.pos[0]+0.1 > dude.leftX && this.pos[0]-0.1 < dude.rightX
-          && this.pos[1]-0.1 < dude.upperY && this.pos[1]+0.1 > dude.lowerY) {
-            score++;
-            gold.splice(i, 1)
-            scoreBars.push(new ScoreBar(score));
-          }
+      if (dude.dead) {
+        gold.splice(i,1);
+      } else {
+        //x og y
+        if (this.pos[0]+0.1 > dude.leftX && this.pos[0]-0.1 < dude.rightX
+            && this.pos[1]-0.1 < dude.upperY && this.pos[1]+0.1 > dude.lowerY) {
+              score++;
+              gold.splice(i, 1)
+              scoreBars.push(new ScoreBar(score));
+        }
+      }
     }
-
+    // collide with monsters
+    for (let i = monsters.length-1; i>=0; i--) {
+      let dude = monsters[i];
+      if (dude.dead) {
+        monsters.splice(i,1);
+      } else {
+        //x og y
+        console.log(dude.leftX, dude.rightX, dude.upperY, dude.lowerY);
+        if (this.pos[0]+0.1 > dude.leftX && this.pos[0]-0.1 < dude.rightX
+            && this.pos[1]-0.1 < dude.upperY && this.pos[1]+0.1 > dude.lowerY) {
+              this.dead = true;   
+              console.log("xogy");         
+        }
+      }
+    }
   }
 
   update() {
@@ -166,6 +187,7 @@ class Mario {
     this.resetPosition();
     this.velX = 0;
     this.velY = 0;
+    this.dead = false;
   }
 
   resetPosition() {
@@ -243,6 +265,9 @@ class Gold {
     this.rightX = 0.05 + x;
     this.lowerY = -0.05 + y;
     this.upperY = 0.05 + y;
+
+    this.time = 0;
+    this.dead = false;
   }
   vertices = new Float32Array([
     -0.05, -0.05, 
@@ -253,12 +278,20 @@ class Gold {
     0.05, -0.05,
   ]);
   color = vec4(1.0, 1.0, 0.0, 1.0);
+  update() {
+    this.time+=0.01;
+  
+  }
   render() {
-    gl.bindBuffer( gl.ARRAY_BUFFER, goldBuffer);   
-    gl.vertexAttribPointer( positionLocation, 2, gl.FLOAT, false, 0, 0 );
-    gl.uniform2fv( position, flatten(this.pos) );
-    gl.uniform4fv( colorLocation, flatten(this.color) );
-    gl.drawArrays( gl.TRIANGLES, 0, 6);
+    if (this.time < 3) {
+      gl.bindBuffer( gl.ARRAY_BUFFER, goldBuffer);   
+      gl.vertexAttribPointer( positionLocation, 2, gl.FLOAT, false, 0, 0 );
+      gl.uniform2fv( position, flatten(this.pos) );
+      gl.uniform4fv( colorLocation, flatten(this.color) );
+      gl.drawArrays( gl.TRIANGLES, 0, 6);
+    } else {
+      this.dead = true;
+    }
   }
 }
 
@@ -298,6 +331,55 @@ class Obsticle {
   }
 }
 
+class Monster {
+  constructor() {
+    let x;
+    let y = -0.8;
+    if (Math.random()<0.5) {
+      x = -1.5;
+      this.velX = 0.01;
+    } else {
+      x = 1.5;
+      this.velX = -0.01;
+    }
+    this.pos = vec2(x, y);
+    gl.bindBuffer( gl.ARRAY_BUFFER, monsterBuffer);   
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(this.vertices), gl.DYNAMIC_DRAW );
+    this.leftX = -0.1 + x;
+    this.rightX = 0.1 + x;
+    this.lowerY = -0.1 + y;
+    this.upperY = 0.1 + y;
+    this.dead = false;
+  }
+  vertices = new Float32Array([
+    -0.1, -0.1, 
+    -0.1, 0.1, 
+    0.1, 0.1,
+    0.1, 0.1,
+    -0.1, -0.1, 
+    0.1, -0.1,
+  ]);
+  color = vec4(1.0, 0.0, 0.0, 1.0);
+  update() {
+    this.pos[0] += this.velX;
+    this.leftX = -0.1 + this.pos[0];
+    this.rightX = 0.1 + this.pos[0];
+    if (Math.abs(this.pos[0]) > 1.6) {
+      this.dead = true;
+    }    
+  }
+  render() {
+    if (!this.dead) {
+      gl.bindBuffer( gl.ARRAY_BUFFER, monsterBuffer);   
+      gl.vertexAttribPointer( positionLocation, 2, gl.FLOAT, false, 0, 0 );
+      gl.uniform2fv( position, flatten(this.pos) );
+      gl.uniform4fv( colorLocation, flatten(this.color) );
+      gl.drawArrays( gl.TRIANGLES, 0, 6);
+    }
+  }
+}
+
+
 // keypress has effect only once
 function eatKey(key) {
   if(g_keys[key]) {
@@ -316,9 +398,7 @@ window.onload = function init() {
     if ( !gl ) { alert( "WebGL isn't available" ); }
     
     gl.viewport( 0, 0, canvas.width, canvas.height );
-    gl.clearColor( 0.0, 1.0, 1.0, 1.0 );
-
-         
+    gl.clearColor( 0.0, 1.0, 1.0, 1.0 );         
     
     //
     //  Load shaders and initialize attribute buffers
@@ -339,6 +419,7 @@ window.onload = function init() {
     goldBuffer = gl.createBuffer();
     obsticleBuffer = gl.createBuffer();
     scoreBarBuffer = gl.createBuffer();
+    monsterBuffer = gl.createBuffer();
 
     ground = new Ground(0.0, -0.95);
     mario = new Mario(0, 0.0, 0.0, 0.0);
@@ -371,6 +452,12 @@ setInterval(()=> {
       gold.push(new Gold());
     }
   }
+
+  if (monsters.length < 2) {
+    if (Math.random() < 0.02) {
+      monsters.push(new Monster());
+    }
+  }
 }, 50);
 function updateSimulation() {
     
@@ -380,12 +467,17 @@ function updateSimulation() {
     }
 
     if (score >= 10) {
-      finalText("You Won! Press Space to play again.");
+      finalText("You Won! Press Space Bar to play again.");
+      running = false;
+    }
+    if (mario.dead) {
+      console.log("asdf");
+      finalText("You Lost! Press Space Bar to Play again.");
       running = false;
     }
 
     if (!running) {
-      if (g_keys[' '.charCodeAt()]) {
+      if (eatKey(' '.charCodeAt())) {
         running = true;
         resetSimulation();
       }
@@ -399,6 +491,7 @@ function resetSimulation() {
   score = 0;
   scoreBars = [];
   gold = [];
+  monsters = [];
 }
 
 function finalText(str) {
@@ -408,6 +501,12 @@ function finalText(str) {
 function update() {
   
   mario.update();
+  for (let g of gold) {
+    g.update();
+  }
+  for (let m of monsters) {
+    m.update();
+  }
   document.getElementById("output").innerHTML = "Your Score: " + score;
   
 }
@@ -423,6 +522,9 @@ function render() {
   }
   for (let s of scoreBars) {
     s.render();
+  }
+  for (let m of monsters) {
+    m.render();
   }
 
   mario.render();
