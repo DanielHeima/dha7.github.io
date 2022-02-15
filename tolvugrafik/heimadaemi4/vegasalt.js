@@ -157,7 +157,6 @@ function render()
     mv = mult( mv, rotateY(spinDefault) ) ;
 
     // Saw
-    //mv1 = mult( mv, translate( -0.3, 0.0, 0.0 ) );
     mv1 = mult( mv, rotateZ(sawRot));
     mv1 = mult( mv1, scalem( 1.5, 0.05, 0.05 ) );
     gl.uniformMatrix4fv(matrixLoc, false, flatten(mv1));
