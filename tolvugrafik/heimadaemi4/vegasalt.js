@@ -144,7 +144,7 @@ function render()
     sawRot += sawVel;
 
     if (spinDefault > 10000) {
-      spinDefault -= 2*Math.PI * 5000;
+      spinDefault -= 2*360 * 5000;
     }
     
     if (Math.abs(sawRot) > 40) {
@@ -154,10 +154,10 @@ function render()
     var mv = mat4();
     mv = mult( mv, rotateX(spinX) );
     mv = mult( mv, rotateY(spinY) ) ;
-    mv = mult( mv, rotateY(spinDefault) ) ;
 
     // Saw
-    mv1 = mult( mv, rotateZ(sawRot));
+    mv1 = mult( mv, rotateY(spinDefault) ) ;
+    mv1 = mult( mv1, rotateZ(sawRot) );
     mv1 = mult( mv1, scalem( 1.5, 0.05, 0.05 ) );
     gl.uniformMatrix4fv(matrixLoc, false, flatten(mv1));
     gl.drawArrays( gl.TRIANGLES, 0, numVertices );
@@ -169,9 +169,9 @@ function render()
     gl.drawArrays( gl.TRIANGLES, 0, numVertices );
 
     // Bottom
-    mv1 = mult( mv, translate( 0.0, -0.5, 0.0 ) );
-    mv1 = mult( mv1, scalem( 0.5, 0.1, 0.5 ) );
-    gl.uniformMatrix4fv(matrixLoc, false, flatten(mv1));
+    var mv2 = mult( mv, translate( 0.0, -0.5, 0.0 ) );
+    mv2 = mult( mv2, scalem( 0.5, 0.1, 0.5 ) );
+    gl.uniformMatrix4fv(matrixLoc, false, flatten(mv2));
     gl.drawArrays( gl.TRIANGLES, 0, numVertices );
 
     requestAnimFrame( render );

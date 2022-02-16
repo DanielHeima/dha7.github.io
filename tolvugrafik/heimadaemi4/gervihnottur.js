@@ -208,8 +208,6 @@ function render() {
     mvg = mult( mvg, translate( 1.8, 0.0, 0.0 ) );
     mvg = mult( mvg, scalem( 0.6, 0.6, 0.6 ) );
     
-   
-
     gl.uniformMatrix4fv(matrixLoc, false, flatten(mvg));
     gl.drawArrays( gl.TRIANGLES, 0, numVertices );
 
