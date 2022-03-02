@@ -1,7 +1,18 @@
 body {
   display: flex;
-  align-items: center;
+  /*align-items: center;*/
   justify-content: center;
-  height: 100%;
-  width: 100vw;
+  /*height: 100%;*/
+}
+
+canvas {
+  height: 512px;
+}
+
+.sliders {
+  margin: 0.5em;
+}
+
+.out {
+  margin-top: 1.4em;
 }

@@ -34,9 +34,36 @@ main()
 <script type="text/javascript" src="animals.js"></script>
 
 <body>
-  <canvas id="gl-canvas" width="512" height="512">
-
-    <br />
+  
+  <canvas id="gl-canvas" width="512" height="512"></canvas>
+  
+  <div class = "sliders">
+    <div id = "nOut" class = "out">n: 10</div>
+      10 <input id="nSlider" type="range" min="10" max="40" step="1" value="10">
+      40
+    <div id = "speedOut" class = "out">Simulation speed: 1</div>
+      0.2 <input id="velSlider" type="range" min="0.2" max="50" step="0.2" value="1">
+      50
+    <div id = "sheepOut" class = "out">Number of sheep: 10</div>
+      0 <input id="sheepSlider" type="range" min="0" max="50" step="1" value="10">
+      50
+    <div id = "wolfsOut" class = "out">Number of wolfs: 10</div>
+      0 <input id="wolfSlider" type="range" min="0" max="50" step="1" value="10">
+      50
+    <div id = "birthOut" class = "out">Time between sheep births (sec): 5</div>
+      0 <input id="birthSlider" type="range" min="0" max="100" step="1" value="5">
+      100
+    <div id = "sheepToWolfOut" class = "out">Number of sheep eaten for new wolf: 5</div>
+      1 <input id="sheepToWolfSlider" type="range" min="1" max="100" step="1" value="5">
+      100
+    <div id = "wolfStarveTimeOut" class = "out">Time until wolf death by starvation: 20</div>
+      1 <input id="wolfStarveTimeSlider" type="range" min="1" max="100" step="1" value="20">
+      100
+    <div id = "panicOut" class = "out">Sheep panic duration: 4</div>
+      0 <input id="panicSlider" type="range" min="0" max="50" step="1" value="4">
+      50
+      
+  </div>
 
 </body>
 
