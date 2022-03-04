@@ -104,7 +104,7 @@ class Wolf {
     this.noEaten = 0;
     this.mv = mat4();
     this.points = [];
-    this.color = vec4(1.0, 0.0, 0.0, 1.0);
+    this.color = vec4(0.2, 0.2, 0.4, 1.0);
     cube(this.points);
     if (pos) {
       this.position = pos
@@ -112,6 +112,9 @@ class Wolf {
       this.position = randPos();
     }
     this.direction = randDir();
+    this.nextX = 10000; // fyrsta gildi a ekki að hafa áhrif 
+    this.nextY = 10000; // fyrsta gildi a ekki að hafa áhrif
+    this.nextZ = 10000; // fyrsta gildi a ekki að hafa áhrif
     gl.bindBuffer( gl.ARRAY_BUFFER, wolfBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(this.points), gl.STATIC_DRAW );
     this.dead = false;
@@ -119,8 +122,8 @@ class Wolf {
   
   update() {
     this.birthCheck();
-    // this.eat();
-    this.scan();
+    this.eat();
+    // this.scan();
 
     switch(this.direction) {
       case 0:
@@ -182,10 +185,16 @@ class Wolf {
           && Math.abs(z-zs) < err) {
         // consume
         s.dead = true; // til oryggis
-        sheep.splice(s);
+        let index = sheep.map(x => {
+          return x.id;
+        }).indexOf(s.id);
+        console.log('etum sheep no', s.id, ' a indexi ', index);
+        sheep.splice(index, 1);
         this.noEaten += 1;
-
-        this.birthCheck();
+        
+        console.log("get eaten biiii: ", s.id);
+        noSheep--;
+        //this.birthCheck();
 
       }
     }
@@ -198,7 +207,7 @@ class Wolf {
   birthCheck() {
     if (this.noEaten >= sheepToNewWolf) {
       this.noEaten = 0;
-      this.birthWolf()
+      this.birthWolf();
     }
   }
 
@@ -206,16 +215,7 @@ class Wolf {
     let pos = this.position;
     let rand = Math.random();
     
-    if (rand < 0.25) {
-      pos[0] += step;
-    } else if (rand < 0.50) {
-      pos[1] += step;
-
-    } else if (rand < 0.75) {
-      pos[0] -= step
-    } else {
-      pos[2] += step;
-    }
+    noWolfs++;
     
     wolfs.push(new Wolf(pos))
   }
@@ -240,7 +240,7 @@ class Sheep {
     this.id = id++;
     this.mv = mat4();
     this.points = [];
-    this.color = vec4(0.0, 1.0, 0.0, 1.0);
+    this.color = vec4(0.0, 0.8, 0.4, 1.0);
     cube(this.points);
     if (pos) {
       this.position = pos
@@ -256,7 +256,7 @@ class Sheep {
     intervals.push(setInterval(() => {
       // sometimes change direction
       if (this.panic > 0) this.panic--;
-      if (Math.random() < 0.8 && !this.panic===0)
+      if (!this.panic===0)
         this.direction = randDir();
     }, 1000 / simulationVel));
 
@@ -271,7 +271,7 @@ class Sheep {
     this.nextY = this.position[1] + this.velY;
     this.nextZ = this.position[2] + this.velZ;
   }
-  updateDir(dir) {
+  updateVel(dir) {
     switch(dir) {
       case 0:
         // x jakv
@@ -309,13 +309,21 @@ class Sheep {
         this.velY = 0.0;
         this.velZ = -step;
         break;
+      default:
+        // stop
+        this.velX = 0.0;
+        this.velY = 0.0;
+        this.velZ = 0.0;
+        break;
     }
   }
   update() {
-    this.updateDir(this.direction);
-
-
+    
+    this.direction = randDir();
+    this.updateVel(this.direction);
+    
     this.collide(); // with sheep and walls
+    
 
     this.position[0] += this.velX;
     this.position[1] += this.velY;
@@ -328,6 +336,9 @@ class Sheep {
     this.nextY = this.position[1] + this.velY;
     this.nextZ = this.position[2] + this.velZ;
 
+    // console.log("next: ", this.nextX, this.nextY, this.nextZ)
+
+    // wrap
     if (this.nextX < from - err) {
       this.position[0] = to + step;
     }
@@ -353,18 +364,20 @@ class Sheep {
     }
     
     // collide with sheep
-    // for (s in sheep) {
-    //   if (s.id === this.id) continue;
-    //   if (Math.abs(this.nextX < s.nextX) < err
-    //   &&  Math.abs(this.nextY < s.nextY) < err
-    //   &&  Math.abs(this.nextZ < s.nextZ) < err) {
-    //     // console.log("collision");
-    //     this.direction = (this.direction + 1) % 6;
-    //     this.updateDir();
-    //     this.updateNext();
-    //     // now checking against new nextPos for remaining sheep
-    //   }
-    // }
+
+    //for (s of sheep) { (use i to be able to restart loop)
+    for (let i = 0; i < sheep.length; i++) {
+      if (s.id === this.id) continue;
+      if (Math.abs(this.nextX - s.nextX) < err
+      &&  Math.abs(this.nextY - s.nextY) < err
+      &&  Math.abs(this.nextZ - s.nextZ) < err) {
+        console.log("collision sheep");
+        this.direction = -1; // give other sheep right of way
+        this.updateVel();
+        this.updateNext();
+        i = -1; // check again for all sheep with this sheep's new next pos.
+      }
+    }
 
   }
 
@@ -406,18 +419,7 @@ class Sheep {
 
   birthSheep() {
     let pos = this.position;
-    let rand = Math.random();
     
-    if (rand < 0.25) {
-      pos[0] += step;
-    } else if (rand < 0.50) {
-      pos[1] += step;
-
-    } else if (rand < 0.75) {
-      pos[0] -= step
-    } else {
-      pos[2] += step;
-    }
     
     sheep.push(new Sheep(pos));
   }
