@@ -16,3 +16,26 @@ canvas {
 .out {
   margin-top: 1.4em;
 }
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  background-color: rgb(251, 234, 212);
+  
+  padding-left: 2em;
+  padding-right: 2em;
+}
+
+html {
+  background-color: rgb(204, 255, 255, 255);
+  font-family: 'Courier New', Courier, monospace;
+  padding: 1em;
+  margin: 1em;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  margin: 1em;
+}

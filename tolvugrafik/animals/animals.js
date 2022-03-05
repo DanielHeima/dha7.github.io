@@ -17,10 +17,10 @@ let n = 10;
 
 let simulationVel = 1;
 let noSheep = 8;
-let noWolfs = 3;
+let noWolfs = 6;
 
-let sheepBirthTime = 5;
-let sheepToNewWolf = 5;
+let sheepBirthTime = 10;
+let sheepToNewWolf = 3;
 let wolfStarveTime = 20;
 
 let panicDur = 4;
@@ -49,6 +49,13 @@ let err = 0.00001;
 
 let wolfs = [];
 let sheep = [];
+
+// stats
+let birthsSheep = 0;
+let birthsWolfs = 0;
+let eaten = 0;
+let wolfsStarved = 0;
+
 
 let vertices = [
   vec3( -border, -border,  border ),
@@ -100,77 +107,157 @@ function randDir() {
 
 class Wolf {
   constructor(pos = false) {
+    this.dead = false;
+    this.eatCool = wolfStarveTime;
     this.id = id++;
     this.noEaten = 0;
     this.mv = mat4();
     this.points = [];
     this.color = vec4(0.2, 0.2, 0.4, 1.0);
     cube(this.points);
+    this.position;
     if (pos) {
-      this.position = pos
+      this.position = pos;
+      this.color = vec4(0.2, 0.2, 0.6, 1.0);
     } else {
       this.position = randPos();
     }
     this.direction = randDir();
+    //this.direction = 56;
     this.nextX = 10000; // fyrsta gildi a ekki að hafa áhrif 
     this.nextY = 10000; // fyrsta gildi a ekki að hafa áhrif
     this.nextZ = 10000; // fyrsta gildi a ekki að hafa áhrif
+    this.velX;
+    this.velY;
+    this.velZ;
+    this.updateVel();
+
     gl.bindBuffer( gl.ARRAY_BUFFER, wolfBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(this.points), gl.STATIC_DRAW );
-    this.dead = false;
+    
+  
+  }
+  updateNext() {
+    this.nextX = this.position[0] + this.velX;
+    this.nextY = this.position[1] + this.velY;
+    this.nextZ = this.position[2] + this.velZ;
+  }
+  updateVel(dir) {
+    switch(dir) {
+      case 0:
+        // x jakv
+        this.velX = step;
+        this.velY = 0.0;
+        this.velZ = 0.0;
+        break;
+      case 1:
+        // y jakv
+        this.velX = 0.0;
+        this.velY = step;
+        this.velZ = 0.0;
+        break;
+      case 2:
+        // z jakv
+        this.velX = 0.0;
+        this.velY = 0.0;
+        this.velZ = step;
+        break;
+      case 3:
+        // x neikv
+        this.velX = -step;
+        this.velY = 0.0;
+        this.velZ = 0.0;
+        break;
+      case 4:
+        // y neikv
+        this.velX = 0.0;
+        this.velY = -step;
+        this.velZ = 0.0;
+        break;
+      case 5:
+        // z neikv
+        this.velX = 0.0;
+        this.velY = 0.0;
+        this.velZ = -step;
+        break;
+      default:
+        // stop
+        this.velX = 0.0;
+        this.velY = 0.0;
+        this.velZ = 0.0;
+        break;
+    }
   }
   
   update() {
     this.birthCheck();
+    
+    this.updateVel(this.direction);
     this.eat();
-    // this.scan();
+    this.eatCool--;
+    this.deathCheck();
+    
+    this.scan();
+    this.updateVel(this.direction);
 
-    switch(this.direction) {
-      case 0:
-        if (this.position[0] + step > to+err) {
-          this.position[0] = from;
-        } else {
-          this.position[0] += step;
-        }
-        break;
-      case 1:
-        if (this.position[1] + step > to+err) {
-          this.position[1] = from;
-        } else {
-          this.position[1] += step;
-        }
-        break;
-      case 2:
-        if (this.position[2] + step > to+err) {
-          this.position[2] = from;
-        } else {
-          this.position[2] += step;
-        }
-        break;
-      case 3:
-        if (this.position[0] - step < from-err) {
-          this.position[0] = to;
-        } else {
-          this.position[0] -= step;
-        }
-        break;
-      case 4:
-        if (this.position[1] - step < from-err) {
-          this.position[1] = to;
-        } else {
-          this.position[1] -= step;
-        }
-        break;
-      case 5:
-        if (this.position[2] - step < from-err) {
-          this.position[2] = to;
-        } else {
-          this.position[2] -= step;
-        }
-        break;
+    this.collide(); // with wolfs and walls (wrap)
+
+
+    this.position[0] += this.velX;
+    this.position[1] += this.velY;
+    this.position[2] += this.velZ;
+  
+    
+  }
+  collide() {
+    this.nextX = this.position[0] + this.velX;
+    this.nextY = this.position[1] + this.velY;
+    this.nextZ = this.position[2] + this.velZ;
+
+    // // console.log("next: ", this.nextX, this.nextY, this.nextZ)
+
+    // wrap
+    if (this.nextX < from - err) {
+      this.position[0] = to + step;
     }
 
+    if (this.nextX > to + err) {
+      this.position[0] = from - step;
+    }
+
+    if (this.nextY < from - err) {
+      this.position[1] = to + step;
+    }
+
+    if (this.nextY > to + err) {
+      this.position[1] = from - step;
+    }
+
+    if (this.nextZ < from - err) {
+      this.position[2] = to + step;
+    }
+
+    if (this.nextZ > to + err) {
+      this.position[2] = from - step;
+    }
+    
+    // collide with wolfs
+
+    //for (w of wolfs) { (use i to be able to restart loop)
+    for (let i = 0; i < wolfs.length; i++) {
+      if (w.id === this.id) continue;
+      if (Math.abs(this.nextX - w.nextX) < err
+      &&  Math.abs(this.nextY - w.nextY) < err
+      &&  Math.abs(this.nextZ - w.nextZ) < err) {
+        // console.log("collision wolf");
+        this.direction = -1; // give other wolfs right of way
+        this.updateVel();
+        this.updateNext();
+        i = -1; // check again for all wolfs with this wolf's new next pos.
+      }
+    }
   }
+
   eat() {
     for (s of sheep) {
       let xs = s.position[0];
@@ -184,16 +271,16 @@ class Wolf {
       if (Math.abs(x-xs) < err && Math.abs(y-ys) < err
           && Math.abs(z-zs) < err) {
         // consume
-        s.dead = true; // til oryggis
+        this.eatCool = wolfStarveTime;
         let index = sheep.map(x => {
           return x.id;
         }).indexOf(s.id);
-        console.log('etum sheep no', s.id, ' a indexi ', index);
         sheep.splice(index, 1);
         this.noEaten += 1;
+        eaten += 1;
         
-        console.log("get eaten biiii: ", s.id);
-        noSheep--;
+        // console.log("get eaten: ", s.id);
+        // noSheep--;
         //this.birthCheck();
 
       }
@@ -201,7 +288,45 @@ class Wolf {
   }
 
   scan() {
-
+    let position = this.position;
+    for (s of sheep) {
+      let pos = s.position;
+      if (Math.abs(pos[0] - position[0]) < err && Math.abs(pos[1] - position[1]) < err) {
+        // i linu vid z
+        if (pos[2] > position[2]) {
+          // upp
+          this.direction = 2;
+        } else {
+          // nidur
+          this.direction = 5;
+        }
+        this.updateVel();
+        return;
+      }
+      if (Math.abs(pos[0] - position[0]) < err && Math.abs(pos[2] - position[2]) < err) {
+        // i linu vid y
+        if (pos[1] > position[1]) {
+          // jakv y
+          this.direction = 1;
+        } else {
+          this.direction = 4;
+        }
+        this.updateVel();
+        return;
+      }
+      if (Math.abs(pos[2] - position[2]) < err && Math.abs(pos[1] - position[1]) < err) {
+        // i linu vid x
+        if (pos[0] > position[0]) {
+          // jakv x
+          this.direction = 0;
+        } else {
+          this.direction = 3;
+        }
+        this.updateVel();
+        return;
+      }
+      
+    }
   }
 
   birthCheck() {
@@ -211,13 +336,38 @@ class Wolf {
     }
   }
 
+  deathCheck() {
+    if (this.eatCool <= 0) {
+      // console.log("die");
+      // suicide
+      wolfsStarved+=1;
+      let index = wolfs.map(x => {
+        return x.id;
+      }).indexOf(this.id);
+      wolfs.splice(index, 1);
+    }
+  }
+
   birthWolf() {
-    let pos = this.position;
-    let rand = Math.random();
+    if (sheep.length + wolfs.length >= n*n*n) return;
+    // console.log("birth wolf");
+    birthsWolfs+=1;
     
-    noWolfs++;
+    let pos = vec3();    
+    pos[0] = this.nextX;
+    pos[1] = this.nextY;
+    pos[2] = this.nextZ;
+    pos = wrap(pos);
+    // stop this one, child will take next square
+    this.direction = 6;
+    this.updateVel();
     
-    wolfs.push(new Wolf(pos))
+    if (!sm.isWolf(pos, this.id)) {
+      wolfs.push(new Wolf(pos));
+      birthsWolfs++;
+      this.birthCool = 1;
+    }
+
   }
   
 
@@ -237,13 +387,16 @@ class Wolf {
 
 class Sheep {
   constructor(pos) {
+    this.birthCool = 0;
     this.id = id++;
     this.mv = mat4();
     this.points = [];
     this.color = vec4(0.0, 0.8, 0.4, 1.0);
     cube(this.points);
+    this.position;
     if (pos) {
-      this.position = pos
+      this.position = pos;
+      this.color = vec4(0.2, 0.6, 0.4, 1.0);
     } else {
       this.position = randPos();
     }
@@ -251,6 +404,11 @@ class Sheep {
     this.nextX = 10000; // fyrsta gildi a ekki að hafa áhrif 
     this.nextY = 10000; // fyrsta gildi a ekki að hafa áhrif
     this.nextZ = 10000; // fyrsta gildi a ekki að hafa áhrif
+    this.velX = 0.0;
+    this.velY = 0.0;
+    this.velZ = 0.0;
+    this.updateVel();
+    
     gl.bindBuffer( gl.ARRAY_BUFFER, sheepBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(this.points), gl.STATIC_DRAW );
     intervals.push(setInterval(() => {
@@ -260,11 +418,10 @@ class Sheep {
         this.direction = randDir();
     }, 1000 / simulationVel));
 
-    // setInterval(() => {
-    //   this.birthSheep();
-    // }, 1000 * sheepBirthTime);
+    intervals.push(setInterval(() => {
+      this.birthSheep();
+    }, 1000 * sheepBirthTime));
 
-    this.dead = false;
   }
   updateNext() {
     this.nextX = this.position[0] + this.velX;
@@ -318,11 +475,14 @@ class Sheep {
     }
   }
   update() {
+    if (this.birthCool !== 0) this.birthCool -= 1;
+    if (this.birthCool > 0) return;
     
+
     this.direction = randDir();
     this.updateVel(this.direction);
     
-    this.collide(); // with sheep and walls
+    this.collide(); // with sheep and walls (wrap)
     
 
     this.position[0] += this.velX;
@@ -336,7 +496,7 @@ class Sheep {
     this.nextY = this.position[1] + this.velY;
     this.nextZ = this.position[2] + this.velZ;
 
-    // console.log("next: ", this.nextX, this.nextY, this.nextZ)
+    // // console.log("next: ", this.nextX, this.nextY, this.nextZ)
 
     // wrap
     if (this.nextX < from - err) {
@@ -371,7 +531,7 @@ class Sheep {
       if (Math.abs(this.nextX - s.nextX) < err
       &&  Math.abs(this.nextY - s.nextY) < err
       &&  Math.abs(this.nextZ - s.nextZ) < err) {
-        console.log("collision sheep");
+        // console.log("collision sheep");
         this.direction = -1; // give other sheep right of way
         this.updateVel();
         this.updateNext();
@@ -418,12 +578,24 @@ class Sheep {
   }
 
   birthSheep() {
-    let pos = this.position;
+    if (sheep.length + wolfs.length >= n*n*n) return;
+    // console.log("birth sheep");
     
+    let pos = vec3();    
+    pos[0] = this.nextX;
+    pos[1] = this.nextY;
+    pos[2] = this.nextZ;
+    pos = wrap(pos);
+    // stop this one, child will take next square
+    this.direction = 6;
+    this.updateVel();
     
-    sheep.push(new Sheep(pos));
+    if (!sm.isSheep(pos, this.id)) {
+      sheep.push(new Sheep(pos));
+      birthsSheep++;
+      this.birthCool = 1;
+    }
   }
-
   render() {
 
     this.mv = MV;
@@ -436,6 +608,33 @@ class Sheep {
     gl.uniform4fv(vColor, flatten(this.color));
     gl.drawArrays( gl.TRIANGLES, 0, this.points.length );
   }
+}
+
+function wrap(pos) {
+  if (pos[0] < from - err) {
+    pos[0] = to;
+  }
+
+  if (pos[0] > to + err) {
+    pos[0] = from;
+  }
+
+  if (pos[1] < from - err) {
+    pos[1] = to;
+  }
+
+  if (pos[1] > to + err) {
+    pos[1] = from;
+  }
+
+  if (pos[2] < from - err) {
+    pos[2] = to;
+  }
+
+  if (pos[2] > to + err) {
+    pos[2] = from;
+  }
+  return pos;
 }
 
 window.onload = function init()
@@ -632,17 +831,36 @@ function render()
       s.render();
     }
     
+    updateStats();
+
     requestAnimFrame( render );
+}
+
+function updateStats() {
+  document.getElementById("birthsSheep").innerHTML = "Sheep births: ".concat(birthsSheep);
+  document.getElementById("birthsWolfs").innerHTML = "Wolf births: ".concat(birthsWolfs);
+  document.getElementById("eaten").innerHTML = "Sheep eaten: ".concat(eaten);
+  document.getElementById("starved").innerHTML = "Wolfs starved: ".concat(wolfsStarved);
+  document.getElementById("sheepLeft").innerHTML = "Sheep left: ".concat(sheep.length);
+  document.getElementById("wolfsLeft").innerHTML = "Wolfs left: ".concat(wolfs.length);
 }
 
 class SpatialManager {
   
   constructor() {
+    this.resetAll();
+  }
+
+  resetAll() {
     intervals.forEach(clearInterval);
     intervals = [];
     sheep = [];
     wolfs = [];
-    
+    birthsSheep = 0;
+    birthsWolfs = 0;
+    eaten = 0;
+    wolfsStarved = 0;
+
     for (let i = 0; i < noSheep; i+=1) {
       this.birthSheep();
     }
@@ -650,34 +868,56 @@ class SpatialManager {
       this.birthWolf();
     }
 
+    this.resetTime();
+  }
+
+  resetTime() {
     if (simulationVel === 0) simulationVel += err;
     intervals.push(setInterval( () => { this.update()}, 1000 / simulationVel));
-    //setInterval( () => { this.birthSheep()}, 1000 * sheepBirthTime);
   }
 
   update() {
     for (let w of wolfs) {
-      if (w.dead) {
-        wolfs.splice(w)
-      } else {
-        w.update();
-      }
+      w.update();
     }
     for (let s of sheep) {
-      if (s.dead) {
-        sheep.splice(s);
-      } else {
-        s.update();
-      }
+      s.update();
     }    
   }
 
   birthSheep() {
+    if (sheep.length + wolfs.length >= n*n*n) return;
     sheep.push(new Sheep());
   }
 
   birthWolf() {
+    if (sheep.length + wolfs.length >= n*n*n) return;
     wolfs.push(new Wolf());
+  }
+
+  isSheep(position, idAsker) {
+    for (let s of sheep) {
+      if (s.id === idAsker) continue;
+      let pos = s.position;
+      if (Math.abs(pos[0] - position[0]) < err
+      &&  Math.abs(pos[1] - position[1]) < err
+      &&  Math.abs(pos[2] - position[2]) < err) {
+        return true;
+      }
+    }
+    return false;
+  }
+  isWolf(position, idAsker) {
+    for (let w of wolfs) {
+      if (w.id === idAsker) continue;
+      let pos = w.position;
+      if (Math.abs(pos[0] - position[0]) < err
+      &&  Math.abs(pos[1] - position[1]) < err
+      &&  Math.abs(pos[2] - position[2]) < err) {
+        return true;
+      }
+    }
+    return false;
   }
 
   updateValues() {

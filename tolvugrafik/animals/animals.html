@@ -35,23 +35,39 @@ main()
 
 <body>
   
-  <canvas id="gl-canvas" width="512" height="512"></canvas>
+  <div class = "stats" id = "stats"> 
+    <h2>Stats:</h2>
+    <div id = "birthsSheep">Sheep births: 0</div>
+    <div id = "birthsWolfs">Wolf births: 0</div>
+    <div id = "eaten">Sheep eaten: 0</div>
+    <div id = "starved">Wolfs starved: 0</div>
+    <div id = "sheepLeft"></div>
+    <div id = "wolfsLeft"></div>
+  </div>
+  
+  <div class = "main">
+    <canvas id="gl-canvas" width="512" height="512"></canvas>
+    <div>Wolfs: Blue</div>
+    <div>Sheep: Green</div>
+  </div>
   
   <div class = "sliders">
+    <h3>Starting state </h3>
     <div id = "nOut" class = "out">n: 10</div>
       10 <input id="nSlider" type="range" min="10" max="40" step="1" value="10">
       40
-    <div id = "speedOut" class = "out">Simulation speed: 1</div>
-      0.2 <input id="velSlider" type="range" min="0.2" max="50" step="0.2" value="1">
-      50
+    
     <div id = "sheepOut" class = "out">Number of sheep: 10</div>
       0 <input id="sheepSlider" type="range" min="0" max="50" step="1" value="10">
       50
-    <div id = "wolfsOut" class = "out">Number of wolfs: 3</div>
-      0 <input id="wolfSlider" type="range" min="0" max="50" step="1" value="3">
+    <div id = "wolfsOut" class = "out">Number of wolfs: 6</div>
+      0 <input id="wolfSlider" type="range" min="0" max="50" step="1" value="6">
       50
-    <div id = "birthOut" class = "out">Time between sheep births (sec): 5</div>
-      0 <input id="birthSlider" type="range" min="0" max="100" step="1" value="5">
+    <div id = "speedOut" class = "out">Simulation speed: 1</div>
+      0.2 <input id="velSlider" type="range" min="0.2" max="50" step="0.2" value="1">
+      50
+    <div id = "birthOut" class = "out">Time between sheep births (sec): 10</div>
+      0 <input id="birthSlider" type="range" min="0" max="100" step="1" value="10">
       100
     <div id = "sheepToWolfOut" class = "out">Number of sheep eaten for new wolf: 5</div>
       1 <input id="sheepToWolfSlider" type="range" min="1" max="100" step="1" value="5">
@@ -62,6 +78,11 @@ main()
     <div id = "panicOut" class = "out">Sheep panic duration: 4</div>
       0 <input id="panicSlider" type="range" min="0" max="50" step="1" value="4">
       50
+    
+    
+    
+    
+    
       
   </div>
 
