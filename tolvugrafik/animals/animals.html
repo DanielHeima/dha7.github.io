@@ -49,6 +49,8 @@ main()
     <canvas id="gl-canvas" width="512" height="512"></canvas>
     <div>Wolfs: Blue</div>
     <div>Sheep: Green</div>
+    <div>Panicked sheep have a yellowish tint.</div>
+
   </div>
   
   <div class = "sliders">
@@ -57,8 +59,8 @@ main()
       10 <input id="nSlider" type="range" min="10" max="40" step="1" value="10">
       40
     
-    <div id = "sheepOut" class = "out">Number of sheep: 10</div>
-      0 <input id="sheepSlider" type="range" min="0" max="50" step="1" value="10">
+    <div id = "sheepOut" class = "out">Number of sheep: 14</div>
+      0 <input id="sheepSlider" type="range" min="0" max="50" step="1" value="14">
       50
     <div id = "wolfsOut" class = "out">Number of wolfs: 6</div>
       0 <input id="wolfSlider" type="range" min="0" max="50" step="1" value="6">
@@ -66,14 +68,14 @@ main()
     <div id = "speedOut" class = "out">Simulation speed: 1</div>
       0.2 <input id="velSlider" type="range" min="0.2" max="50" step="0.2" value="1">
       50
-    <div id = "birthOut" class = "out">Time between sheep births (sec): 10</div>
-      0 <input id="birthSlider" type="range" min="0" max="100" step="1" value="10">
+    <div id = "birthOut" class = "out">Time between sheep births (sec): 30</div>
+      0 <input id="birthSlider" type="range" min="0" max="100" step="1" value="30">
       100
-    <div id = "sheepToWolfOut" class = "out">Number of sheep eaten for new wolf: 5</div>
-      1 <input id="sheepToWolfSlider" type="range" min="1" max="100" step="1" value="5">
+    <div id = "sheepToWolfOut" class = "out">Number of sheep eaten for new wolf: 3</div>
+      1 <input id="sheepToWolfSlider" type="range" min="1" max="100" step="1" value="3">
       100
-    <div id = "wolfStarveTimeOut" class = "out">Time until wolf death by starvation: 20</div>
-      1 <input id="wolfStarveTimeSlider" type="range" min="1" max="100" step="1" value="20">
+    <div id = "wolfStarveTimeOut" class = "out">Ticks until wolf death by starvation: 40</div>
+      1 <input id="wolfStarveTimeSlider" type="range" min="1" max="100" step="1" value="40">
       100
     <div id = "panicOut" class = "out">Sheep panic duration: 4</div>
       0 <input id="panicSlider" type="range" min="0" max="50" step="1" value="4">

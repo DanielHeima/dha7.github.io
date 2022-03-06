@@ -16,12 +16,12 @@ let matrixLoc;
 let n = 10;
 
 let simulationVel = 1;
-let noSheep = 8;
+let noSheep = 14;
 let noWolfs = 6;
 
-let sheepBirthTime = 10;
+let sheepBirthTime = 30;
 let sheepToNewWolf = 3;
-let wolfStarveTime = 20;
+let wolfStarveTime = 40;
 
 let panicDur = 4;
 
@@ -32,6 +32,8 @@ let MV;
 let sm;
 
 let edges;
+let wolfs = [];
+let sheep = [];
 
 let lineBuffer;
 let wolfBuffer;
@@ -46,9 +48,6 @@ let from = -border+border/n;
 let to = border-1/n + border/n;
 let scaleAnimals = 1/n;
 let err = 0.00001;
-
-let wolfs = [];
-let sheep = [];
 
 // stats
 let birthsSheep = 0;
@@ -106,14 +105,16 @@ function randDir() {
 }
 
 class Wolf {
-  constructor(pos = false) {
+  constructor(pos = false, color = false) {
     this.dead = false;
     this.eatCool = wolfStarveTime;
     this.id = id++;
     this.noEaten = 0;
     this.mv = mat4();
     this.points = [];
+    
     this.color = vec4(0.2, 0.2, 0.4, 1.0);
+    
     cube(this.points);
     this.position;
     if (pos) {
@@ -276,6 +277,19 @@ class Wolf {
           return x.id;
         }).indexOf(s.id);
         sheep.splice(index, 1);
+
+        // delete both intervals initialized in sheep constructor
+        index = intervals.map(x => {
+          return x.id;
+        }).indexOf(s.id);
+        clearInterval(intervals[index].interval)
+        intervals.splice(index, 1);
+        index = intervals.map(x => {
+          return x.id;
+        }).indexOf(s.id);
+        clearInterval(intervals[index].interval)
+        intervals.splice(index, 1);
+
         this.noEaten += 1;
         eaten += 1;
         
@@ -386,20 +400,23 @@ class Wolf {
 }
 
 class Sheep {
-  constructor(pos) {
+  constructor(pos = false) {
+    this.panic = 0;
     this.birthCool = 0;
     this.id = id++;
     this.mv = mat4();
     this.points = [];
+    
     this.color = vec4(0.0, 0.8, 0.4, 1.0);
+  
     cube(this.points);
     this.position;
     if (pos) {
       this.position = pos;
-      this.color = vec4(0.2, 0.6, 0.4, 1.0);
     } else {
       this.position = randPos();
     }
+    this.defaultColor = this.color;
     this.direction = randDir();
     this.nextX = 10000; // fyrsta gildi a ekki að hafa áhrif 
     this.nextY = 10000; // fyrsta gildi a ekki að hafa áhrif
@@ -411,16 +428,26 @@ class Sheep {
     
     gl.bindBuffer( gl.ARRAY_BUFFER, sheepBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(this.points), gl.STATIC_DRAW );
-    intervals.push(setInterval(() => {
-      // sometimes change direction
-      if (this.panic > 0) this.panic--;
-      if (!this.panic===0)
-        this.direction = randDir();
-    }, 1000 / simulationVel));
+    intervals.push({
+      id: this.id,
+      interval: setInterval(() => {
+          // sometimes change direction
+          if (this.panic > 0) this.panic--;
+          if (!this.panic===0)
+            this.direction = randDir();
+        }, 1000 / simulationVel)
+    });
 
-    intervals.push(setInterval(() => {
-      this.birthSheep();
-    }, 1000 * sheepBirthTime));
+    intervals.push({
+      id: this.id,
+      interval: setInterval(() => {
+            this.birthSheep();
+          }, 1000 * sheepBirthTime)
+    });
+
+    //intervals.push(setInterval(() => {
+    //  this.birthSheep();
+    //}, 1000 * sheepBirthTime));
 
   }
   updateNext() {
@@ -478,9 +505,16 @@ class Sheep {
     if (this.birthCool !== 0) this.birthCool -= 1;
     if (this.birthCool > 0) return;
     
-
-    this.direction = randDir();
-    this.updateVel(this.direction);
+    if (this.panic > 0) {
+      this.panic -= 1;
+      this.color = vec4(0.6, 0.8, 0.0, 1.0);
+    }
+    
+    if (this.panic === 0) {
+      this.direction = randDir();
+      this.updateVel(this.direction);
+      this.color = this.defaultColor;
+    }
     
     this.collide(); // with sheep and walls (wrap)
     
@@ -591,6 +625,7 @@ class Sheep {
     this.updateVel();
     
     if (!sm.isSheep(pos, this.id)) {
+      
       sheep.push(new Sheep(pos));
       birthsSheep++;
       this.birthCool = 1;
@@ -739,7 +774,7 @@ window.onload = function init()
 
     document.getElementById("wolfStarveTimeSlider").onchange = function(event) {
       wolfStarveTime = event.target.value;
-      document.getElementById("wolfStarveTimeOut").innerHTML = "Time until wolf death by starvation: ".concat(wolfStarveTime);  
+      document.getElementById("wolfStarveTimeOut").innerHTML = "Ticks until wolf death by starvation: ".concat(wolfStarveTime);  
       sm.updateValues();    
       sm = new SpatialManager();
     }
@@ -852,7 +887,7 @@ class SpatialManager {
   }
 
   resetAll() {
-    intervals.forEach(clearInterval);
+    intervals.forEach((dude) => {clearInterval(dude.interval)});
     intervals = [];
     sheep = [];
     wolfs = [];
@@ -873,7 +908,9 @@ class SpatialManager {
 
   resetTime() {
     if (simulationVel === 0) simulationVel += err;
-    intervals.push(setInterval( () => { this.update()}, 1000 / simulationVel));
+    intervals.push({
+      interval: setInterval( () => { this.update()}, 1000 / simulationVel)
+    });
   }
 
   update() {
@@ -927,5 +964,3 @@ class SpatialManager {
     scaleAnimals = 1/n;
   }
 }
-
-
