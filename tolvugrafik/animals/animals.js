@@ -25,10 +25,11 @@ let wolfStarveTime = 40;
 
 let panicDur = 4;
 
+let zDist = -2;
+
 //////////////////
 
 let MV;
-let zDist = -3.0;
 
 let sm;
 
@@ -788,6 +789,18 @@ window.onload = function init()
       sm = new SpatialManager();
     }
 
+    // Event listener for keyboard
+    window.addEventListener("keydown", function(e){
+      switch( e.keyCode ) {
+         case 38:	// upp ör
+             zDist += 0.1;
+             break;
+         case 40:	// niður ör
+             zDist -= 0.1;
+             break;
+      }
+  }  );  
+
     
 
     render();
@@ -855,7 +868,6 @@ function render()
     
     
     ///MV = mat4();
-    zDist = -2;
     let eyesep = 0.2
     
     MV = lookAt( vec3(0.0-eyesep/2.0, 0.0, zDist),
