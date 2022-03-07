@@ -8,10 +8,11 @@
 attribute vec4 vPosition;
 
 uniform mat4 mv;
+uniform mat4 projection;
 
 void main() 
 {
-    gl_Position = mv * vPosition;
+    gl_Position = projection * mv * vPosition;
 } 
 </script>
 
