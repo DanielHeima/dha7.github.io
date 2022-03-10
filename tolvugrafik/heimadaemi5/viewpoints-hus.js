@@ -33,6 +33,18 @@ var carXPos = 100.0;
 var carYPos = 0.0;
 var height = 0.0;
 
+let lookDirection = 0.0;
+let lookXPos = 100.0;
+let lookYPos = 0;
+let dudeX = 0.0;
+let dudeY = 0.0;
+
+let spinX = 0.0;
+let spinY = 0.0;
+let origX = 0.0;
+let origY = 0.0;
+let movement = false;
+
 // current viewpoint
 var view = 1;
 
@@ -137,6 +149,7 @@ window.onload = function init()
 
     // Event listener for keyboard
     window.addEventListener("keydown", function(e){
+        let step = 3.0;
         switch( e.keyCode ) {
             case 49:	// 1: distant and stationary viewpoint
                 view = 1;
@@ -176,23 +189,39 @@ window.onload = function init()
                 break;
             case 48:	// 0: 
                 view = 0;
-                document.getElementById("Viewpoint").innerHTML = "0: Auga hreyfanlegt með upp- og niður örvalyklum o.fl.";
+                document.getElementById("Viewpoint").innerHTML = "0: Auga hreyfanlegt með upp- og niður örvalyklum og mús breytir hvert er horft í X stefnu";
                 break;
             
             case 38:    // up arrow
+                e.preventDefault();
                 height += 2.0;
+
+                dudeX += step * Math.sin( radians(lookDirection))
+                dudeY += step * Math.cos( radians(lookDirection))
                 document.getElementById("Height").innerHTML = "Viðbótarhæð: "+ height;
                 break;
             case 40:    // down arrow
+                e.preventDefault();
                 height -= 2.0;
+                dudeX += step * Math.sin( radians(lookDirection + 180))
+                dudeY += step * Math.cos( radians(lookDirection + 180))
                 document.getElementById("Height").innerHTML = "Viðbótarhæð: "+ height;
                 break;
         }
     } );
 
+    // mouse
+    window.addEventListener("mousemove", function(e){
+        if(movement) {
+            lookDirection += (e.movementX);  
+            lookDirection %= 360;
+            console.log(lookDirection);
+        }
+        
+    } );
+
     render();
 }
-
 
 // create the vertices that form the car track
 function createTrack() {
@@ -206,7 +235,6 @@ function createTrack() {
         theta += 360.0/TRACK_PTS;
     }
 }
-
 
 // draw a house in location (x, y) of size size
 function house( x, y, size, mv ) {
@@ -231,7 +259,6 @@ function house( x, y, size, mv ) {
     gl.drawArrays( gl.TRIANGLES, 0, numCubeVertices );
 }
     
-
 // draw the circular track and a few houses (i.e. red cubes)
 function drawScenery( mv ) {
 
@@ -293,77 +320,107 @@ function render()
     carXPos = TRACK_RADIUS * Math.sin( radians(carDirection) );
     carYPos = TRACK_RADIUS * Math.cos( radians(carDirection) );
 
+    lookXPos = 1000 * Math.sin( radians(lookDirection) );
+    lookYPos = 1000 * Math.cos( radians(lookDirection) );
+
     var mv = mat4();
+    
+    movement = view === 0 ? true : false;
+    if (view === 0) {
+      height = 0;
+    }
+  
+
     switch( view ) {
         case 1:
             // Distant and stationary viewpoint
-              mv = lookAt( vec3(250.0, 0.0, 100.0+height), vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 1.0) );
-              drawScenery( mv );
-              mv = mult( mv, translate( carXPos, carYPos, 0.0 ) );
-              mv = mult( mv, rotateZ( carDirection ) ) ;
-              drawCar( mv );
-              break;
-          case 2:
-              // Static viewpoint inside the track; camera follows car
-              mv = lookAt( vec3(75.0, 0.0, 5.0+height), vec3(carXPos, carYPos, 0.0), vec3(0.0, 0.0, 1.0 ) );
-              drawScenery( mv );
-              mv = mult( mv, translate(carXPos, carYPos, 0.0) );
-              mv = mult( mv, rotateZ( carDirection ) ) ;
-              drawCar( mv );
-              break;
-          case 3:
-              // Static viewpoint outside the track; camera follows car
-              mv = lookAt( vec3(125.0, 0.0, 5.0+height), vec3(carXPos, carYPos, 0.0), vec3(0.0, 0.0, 1.0 ) );
-              drawScenery( mv );
-              mv = mult( mv, translate(carXPos, carYPos, 0.0) );
-              mv = mult( mv, rotateZ( carDirection ) ) ;
-              drawCar( mv );
-              break;
-          case 4:
-              // Driver's point of view.
-              mv = lookAt( vec3(-3.0, 0.0, 5.0+height), vec3(12.0, 0.0, 2.0+height), vec3(0.0, 0.0, 1.0 ) );
-              drawCar( mv );
-              mv = mult( mv, rotateZ( -carDirection ) );
-              mv = mult( mv, translate(-carXPos, -carYPos, 0.0) );
-              drawScenery( mv );
-              break;
-          case 5:
-              // Drive around while looking at a house at (40, 120)
-              mv = rotateY( carDirection );
-              mv = mult( mv, lookAt( vec3(3.0, 0.0, 5.0+height), vec3(40.0-carXPos, 120.0-carYPos, 0.0), vec3(0.0, 0.0, 1.0 ) ) );
-              drawCar( mv );
-              mv = mult( mv, rotateZ( -carDirection ) );
-              mv = mult( mv, translate(-carXPos, -carYPos, 0.0) );
-              drawScenery( mv );
-              break;
-          case 6:
-              // Behind and above the car
-              mv = lookAt( vec3(-12.0, 0.0, 6.0+height), vec3(15.0, 0.0, 4.0), vec3(0.0, 0.0, 1.0 ) );
-              drawCar( mv );
-              mv = mult( mv, rotateZ( -carDirection ) );
-              mv = mult( mv, translate(-carXPos, -carYPos, 0.0) );
-              drawScenery( mv );
-              break;
-          case 7:
-              // View backwards looking from another car
-              mv = lookAt( vec3(25.0, 5.0, 5.0+height), vec3(0.0, 0.0, 2.0), vec3(0.0, 0.0, 1.0 ) );
-              drawCar( mv );
-              mv = mult( mv, rotateZ( -carDirection ) );
-              mv = mult( mv, translate(-carXPos, -carYPos, 0.0) );
-              drawScenery( mv );
-              break;
-          case 8:
-              // View from beside the car
-              mv = lookAt( vec3(2.0, 20.0, 5.0+height), vec3(2.0, 0.0, 2.0), vec3(0.0, 0.0, 1.0 ) );
-              drawCar( mv );
-              mv = mult( mv, rotateZ( -carDirection ) );
-              mv = mult( mv, translate(-carXPos, -carYPos, 0.0) );
-              drawScenery( mv );
-              break;
-              
-            }
-    
-    
+            mv = lookAt( vec3(250.0, 0.0, 100.0+height), vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 1.0) );
+            drawScenery( mv );
+            mv = mult( mv, translate( carXPos, carYPos, 0.0 ) );
+            mv = mult( mv, rotateZ( carDirection ) ) ;
+            drawCar( mv );
+            break;
+        case 2:
+            // Static viewpoint inside the track; camera follows car
+            mv = lookAt( vec3(75.0, 0.0, 5.0+height), vec3(carXPos, carYPos, 0.0), vec3(0.0, 0.0, 1.0 ) );
+            drawScenery( mv );
+            mv = mult( mv, translate(carXPos, carYPos, 0.0) );
+            mv = mult( mv, rotateZ( carDirection ) ) ;
+            drawCar( mv );
+            break;
+        case 3:
+            // Static viewpoint outside the track; camera follows car
+            mv = lookAt( vec3(125.0, 0.0, 5.0+height), vec3(carXPos, carYPos, 0.0), vec3(0.0, 0.0, 1.0 ) );
+            drawScenery( mv );
+            mv = mult( mv, translate(carXPos, carYPos, 0.0) );
+            mv = mult( mv, rotateZ( carDirection ) ) ;
+            drawCar( mv );
+            break;
+        case 4:
+            // Driver's point of view.
+            mv = lookAt( vec3(-3.0, 0.0, 5.0+height), vec3(12.0, 0.0, 2.0+height), vec3(0.0, 0.0, 1.0 ) );
+            drawCar( mv );
+            mv = mult( mv, rotateZ( -carDirection ) );
+            mv = mult( mv, translate(-carXPos, -carYPos, 0.0) );
+            drawScenery( mv );
+            break;
+        case 5:
+            // Drive around while looking at a house at (40, 120)
+            mv = rotateY( carDirection );
+            mv = mult( mv, lookAt( vec3(3.0, 0.0, 5.0+height), vec3(40.0-carXPos, 120.0-carYPos, 0.0), vec3(0.0, 0.0, 1.0 ) ) );
+            drawCar( mv );
+            mv = mult( mv, rotateZ( -carDirection ) );
+            mv = mult( mv, translate(-carXPos, -carYPos, 0.0) );
+            drawScenery( mv );
+            break;
+        case 6:
+            // Behind and above the car
+            mv = lookAt( vec3(-12.0, 0.0, 6.0+height), vec3(15.0, 0.0, 4.0), vec3(0.0, 0.0, 1.0 ) );
+            drawCar( mv );
+            mv = mult( mv, rotateZ( -carDirection ) );
+            mv = mult( mv, translate(-carXPos, -carYPos, 0.0) );
+            drawScenery( mv );
+            break;
+        case 7:
+            // View backwards looking from another car
+            mv = lookAt( vec3(25.0, 5.0, 5.0+height), vec3(0.0, 0.0, 2.0), vec3(0.0, 0.0, 1.0 ) );
+            drawCar( mv );
+            mv = mult( mv, rotateZ( -carDirection ) );
+            mv = mult( mv, translate(-carXPos, -carYPos, 0.0) );
+            drawScenery( mv );
+            break;
+        case 8:
+            // View from beside the car
+            mv = lookAt( vec3(2.0, 20.0, 5.0+height), vec3(2.0, 0.0, 2.0), vec3(0.0, 0.0, 1.0 ) );
+            drawCar( mv );
+            mv = mult( mv, rotateZ( -carDirection ) );
+            mv = mult( mv, translate(-carXPos, -carYPos, 0.0) );
+            drawScenery( mv );
+            break;
+        case 9:
+            // Static viewpoint on top of house; camera follows car
+            mv = lookAt( vec3(-40, 140, 18 + height), vec3(carXPos, carYPos, 0.0), vec3(0.0, 0.0, 1.0 ) );
+            drawScenery( mv );
+            mv = mult( mv, translate(carXPos, carYPos, 0.0) );
+            mv = mult( mv, rotateZ( carDirection ) ) ;
+            drawCar( mv );
+            break;
+        case 0:
+            document.getElementById("Height").innerHTML = "";
+            // Auga i fastri hæð
+            // Hægt að hreyfa fram og afturábak með upp og niður örvalyklum => beila á height í bili
+            // Hægt að breyta núverandi sefnu augans með músinni (einungis vinstri og hægri)
+            
+            console.log(dudeX, dudeY, lookXPos, lookYPos);
+            mv = lookAt( vec3(dudeX, dudeY, 5), vec3(lookXPos, lookYPos, 5), vec3(0.0, 0.0, 1.0 ) );
+            drawScenery( mv );
+            mv = mult( mv, translate(carXPos, carYPos, 0.0) );
+            mv = mult( mv, rotateZ( carDirection ) ) ;
+            drawCar( mv );
+            break;
+      
+    }
+        
     requestAnimFrame( render );
 }
 
