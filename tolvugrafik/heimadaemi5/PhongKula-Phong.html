@@ -1,8 +1,5 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <link rel="stylesheet" href = "styles.css">
-</head>
 
 <script id="vertex-shader" type="x-shader/x-vertex">
 
@@ -38,27 +35,20 @@ uniform vec4 ambientProduct;
 uniform vec4 diffuseProduct;
 uniform vec4 specularProduct;
 uniform float shininess;
-uniform int phong;
-
 varying vec3 N, L, E;
 
 void main()
 {
     vec4 fColor;
-    vec3 R;
-    vec3 H;
-    float Ks;
 
-    if (phong == 1) {
-      R = 2.0*max( dot(normalize(L), normalize(N)), 0.0)*normalize(N) - normalize(L);
-      Ks = pow( max(dot(normalize(E), R), 0.0), shininess );
-    } else if (phong == 2) {
-      H = normalize( normalize(L) + normalize(E) );
-      Ks = pow( max(dot(normalize(N), H), 0.0), shininess );
-    }
-
-    /////////////////////////////////////////////////////////// eins i badu
     vec4 ambient = ambientProduct;
+
+    
+    vec3 R = 2.0*max( dot(normalize(L), normalize(N)), 0.0)*normalize(N) - normalize(L);
+    
+    float Ks = pow( max(dot(normalize(E), R), 0.0), shininess );
+    
+    ///////////////////////////////////////
     float Kd = max( dot(normalize(L), normalize(N)), 0.0 );
     vec4  diffuse = Kd*diffuseProduct;
     vec4  specular = Ks * specularProduct;
@@ -80,10 +70,6 @@ void main()
 <body>
 <table style="width:100%">
   <tr>
-    <td>Blinn-Phong <label class="switch">
-      <input type="checkbox" id ="switch">
-      <span class="slider round"></span>
-    </label>  Phong</td>    
     <td> <canvas id="gl-canvas" width="512" height="512">
     <td> <button id = "btnIncrease">Increase Subdivisions</button> </td>
     <td> <button id = "btnDecrease">Decrease Subdivisions</button> </td>

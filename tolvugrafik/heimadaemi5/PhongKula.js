@@ -47,6 +47,7 @@ var ambientColor, diffuseColor, specularColor;
 
 var modelViewMatrix, projectionMatrix;
 var modelViewMatrixLoc, projectionMatrixLoc;
+var phongLoc;
 
 var normalMatrix, normalMatrixLoc;
 
@@ -151,10 +152,13 @@ window.onload = function init() {
     var vPosition = gl.getAttribLocation( program, "vPosition");
     gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vPosition);
+
+    
     
     modelViewMatrixLoc = gl.getUniformLocation( program, "modelViewMatrix" );
     projectionMatrixLoc = gl.getUniformLocation( program, "projectionMatrix" );
     normalMatrixLoc = gl.getUniformLocation( program, "normalMatrix" );
+    phongLoc = gl.getUniformLocation( program, "phong" );
 
     projectionMatrix = perspective( fovy, 1.0, near, far );
     
@@ -201,8 +205,7 @@ window.onload = function init() {
         normalsArray = [];
         init();
     };
-
-
+      
     // Event listener for mousewheel
      window.addEventListener("wheel", function(e){
          if( e.deltaY > 0.0 ) {
@@ -212,6 +215,7 @@ window.onload = function init() {
          }
      }  );  
 
+
     render();
 }
 
@@ -219,6 +223,13 @@ window.onload = function init() {
 function render() {
     
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    let phong = document.querySelector("#switch").checked;
+    if (phong) {
+      gl.uniform1i(phongLoc, 1);
+    } else {
+      gl.uniform1i(phongLoc, 2);
+    }
     
     modelViewMatrix = lookAt( vec3(0.0, 0.0, zDist), at, up );
     modelViewMatrix = mult( modelViewMatrix, rotate( spinY, [0, 1, 0] ) );
