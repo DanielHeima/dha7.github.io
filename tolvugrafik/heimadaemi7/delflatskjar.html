@@ -1,0 +1,60 @@
+<html>
+
+<!--
+
+  
+-->
+<script id="vertex-shader" type="x-shader/x-vertex">
+
+attribute  vec4 vPosition;
+attribute  vec2 vTexCoord;
+
+attribute  vec4 vColor;
+varying vec4 fColor;
+varying vec2 fTexCoord;
+
+uniform mat4 rotation;
+
+void main() 
+{
+    fColor = vColor;
+    fTexCoord = vTexCoord;
+    gl_Position = rotation * vPosition;
+} 
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+
+precision mediump float;
+   
+varying vec4 fColor;
+uniform sampler2D texture;
+varying vec2 fTexCoord;
+uniform int isTex;
+
+void
+main()
+{
+    if (isTex == 1) {
+      gl_FragColor = texture2D( texture, fTexCoord );
+    } else {
+      gl_FragColor = fColor;
+    }
+}
+</script>
+
+<script type="text/javascript" src="../Common/webgl-utils.js"></script>
+<script type="text/javascript" src="../Common/initShaders.js"></script>
+<script type="text/javascript" src="../Common/MV.js"></script>
+<script type="text/javascript" src="flatskjar.js"></script>
+
+<body>
+<canvas id="gl-canvas" width="512"" height="512">
+   
+<br/>
+
+<img id = "skjarImage" src = "./skjar.jpg" hidden></img>
+
+
+</body>
+</html>

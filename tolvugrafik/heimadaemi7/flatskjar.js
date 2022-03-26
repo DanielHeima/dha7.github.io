@@ -20,6 +20,47 @@ var origY;
 
 var matrixLoc;
 
+var program1;
+var program2;
+
+var texture;
+
+var movement = false;
+var spinX = 0;
+var spinY = 0;
+var origX;
+var origY;
+
+var zDist = 5.0;
+
+var locRotation1;
+var locPosition1;
+var locRotation2;
+var locPosition2;
+var locTexCoord;
+
+var vBuffer;
+var screenBuffer;
+
+var texVertices = [
+  vec3( -0.5,  0.5,  0.5 ),
+  vec3( -0.5, -0.5,  0.5 ),
+  vec3(  0.5, -0.5,  0.5 ),
+  vec3( -0.5,  0.5,  0.5 ),
+  vec3(  0.5, -0.5,  0.5 ),
+  vec3(  0.5,  0.5,  0.5 )
+];
+
+var texCoords = [
+  vec2( 0.0, 0.0 ),
+  vec2( 1.0, 0.0 ),
+  vec2( 1.0, 1.0 ),
+  vec2( 1.0, 1.0 ),
+  vec2( 0.0, 1.0 ),
+  vec2( 0.0, 0.0 )
+];
+
+
 window.onload = function init()
 {
     canvas = document.getElementById( "gl-canvas" );
@@ -30,34 +71,57 @@ window.onload = function init()
     colorCube();
 
     gl.viewport( 0, 0, canvas.width, canvas.height );
-    gl.clearColor( 1.0, 1.0, 1.0, 1.0 );
+    gl.clearColor( 0.9, 1.0, 1.0, 1.0 );
     
     gl.enable(gl.DEPTH_TEST);
 
     //
     //  Load shaders and initialize attribute buffers
     //
-    var program = initShaders( gl, "vertex-shader", "fragment-shader" );
-    gl.useProgram( program );
+    program1 = initShaders( gl, "vertex-shader", "fragment-shader" );
+    
+    program2 = initShaders( gl, "vertex-shader2", "fragment-shader2" );
+
+    gl.useProgram( program1 );
     
     var cBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, cBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW );
 
-    var vColor = gl.getAttribLocation( program, "vColor" );
+    var vColor = gl.getAttribLocation( program1, "vColor" );
     gl.vertexAttribPointer( vColor, 4, gl.FLOAT, false, 0, 0 );
     gl.enableVertexAttribArray( vColor );
 
-    var vBuffer = gl.createBuffer();
+    vBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW );
 
-    var vPosition = gl.getAttribLocation( program, "vPosition" );
-    gl.vertexAttribPointer( vPosition, 3, gl.FLOAT, false, 0, 0 );
-    gl.enableVertexAttribArray( vPosition );
+    locPosition1 = gl.getAttribLocation( program1, "vPosition" );
+    gl.vertexAttribPointer( locPosition1, 3, gl.FLOAT, false, 0, 0 );
+    gl.enableVertexAttribArray( locPosition1 );
 
-    matrixLoc = gl.getUniformLocation( program, "rotation" );
+    locPosition2 = gl.getAttribLocation( program2, "vPosition" );
+    gl.vertexAttribPointer( locPosition2, 3, gl.FLOAT, false, 0, 0 );
+    gl.enableVertexAttribArray( locPosition2 );
 
+    locRotation1 = gl.getUniformLocation( program1, "rotation" );
+    locRotation2 = gl.getUniformLocation( program2, "rotation" );
+
+    screenBuffer = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, screenBuffer );
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(texVertices), gl.STATIC_DRAW );
+    
+    // ef thessi kodi er med lendi eg i villu...
+    // var tBuffer = gl.createBuffer();
+    // gl.bindBuffer( gl.ARRAY_BUFFER, tBuffer );
+    // gl.bufferData( gl.ARRAY_BUFFER, flatten(texCoords), gl.STATIC_DRAW );
+    
+    // locTexCoord = gl.getAttribLocation( program2, "vTexCoord" );
+    // gl.vertexAttribPointer( locTexCoord, 2, gl.FLOAT, false, 0, 0 );
+    // gl.enableVertexAttribArray( locTexCoord );
+    
+    // var image = document.getElementById("skjarImage");
+    // configureTexture( image, program2 );
     //event listeners for mouse
     canvas.addEventListener("mousedown", function(e){
         movement = true;
@@ -80,6 +144,21 @@ window.onload = function init()
     } );
     
     render();
+}
+
+function configureTexture( image, prog ) {
+  texture = gl.createTexture();
+  gl.bindTexture( gl.TEXTURE_2D, texture );
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image );
+  gl.generateMipmap( gl.TEXTURE_2D );
+  gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE );
+  gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE );
+  gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_LINEAR );
+  gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
+  
+  gl.useProgram(prog);
+  gl.uniform1i(gl.getUniformLocation(prog, "texture"), 0);
 }
 
 function colorCube()
@@ -135,6 +214,8 @@ function quad(a, b, c, d)
 function render()
 {
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.useProgram( program1 );
+    gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
 
     var mv = mat4();
     mv = mult( mv, rotateX(spinX) );
@@ -142,19 +223,19 @@ function render()
 
     // Screen
     mv1 = mult( mv, scalem( 1.0, 0.6, 0.05 ) );
-    gl.uniformMatrix4fv(matrixLoc, false, flatten(mv1));
+    gl.uniformMatrix4fv(locRotation1, false, flatten(mv1));
     gl.drawArrays( gl.TRIANGLES, 0, numVertices );
 
     // Connection
     mv1 = mult( mv, translate( 0.0, -0.4, 0.0 ) );
     mv1 = mult( mv1, scalem( 0.1, 0.2, 0.05 ) );
-    gl.uniformMatrix4fv(matrixLoc, false, flatten(mv1));
+    gl.uniformMatrix4fv(locRotation1, false, flatten(mv1));
     gl.drawArrays( gl.TRIANGLES, 0, numVertices );
 
     // Bottom
     mv1 = mult( mv, translate( 0.0, -0.5, 0.0 ) );
     mv1 = mult( mv1, scalem( 0.5, 0.05, 0.3 ) );
-    gl.uniformMatrix4fv(matrixLoc, false, flatten(mv1));
+    gl.uniformMatrix4fv(locRotation1, false, flatten(mv1));
     gl.drawArrays( gl.TRIANGLES, 0, numVertices );
 
     requestAnimFrame( render );

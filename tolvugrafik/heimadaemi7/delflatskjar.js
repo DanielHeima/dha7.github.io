@@ -20,6 +20,30 @@ var origY;
 
 var matrixLoc;
 
+let isTexture = 0;
+let isTexLoc;
+
+var texVertices = [
+  vec3( -0.5,  0.5,  0.5 ),
+  vec3( -0.5, -0.5,  0.5 ),
+  vec3(  0.5, -0.5,  0.5 ),
+  vec3( -0.5,  0.5,  0.5 ),
+  vec3(  0.5, -0.5,  0.5 ),
+  vec3(  0.5,  0.5,  0.5 )
+];
+var texCoords = [
+  vec2(10.0, 0.0),
+  vec2(128.0, 0.0),
+  vec2(128.0, 128.0),
+  vec2(128.0, 128.0),
+  vec2(0.0, 128.0),
+  vec2(0.0, 0.0)
+]
+
+var texSkjar;
+var vBuffer;
+var texBuffer;
+
 window.onload = function init()
 {
     canvas = document.getElementById( "gl-canvas" );
@@ -48,13 +72,36 @@ window.onload = function init()
     gl.vertexAttribPointer( vColor, 4, gl.FLOAT, false, 0, 0 );
     gl.enableVertexAttribArray( vColor );
 
-    var vBuffer = gl.createBuffer();
+    vBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW );
+
+    texBuffer = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, texBuffer );
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(texVertices), gl.STATIC_DRAW );
 
     var vPosition = gl.getAttribLocation( program, "vPosition" );
     gl.vertexAttribPointer( vPosition, 3, gl.FLOAT, false, 0, 0 );
     gl.enableVertexAttribArray( vPosition );
+
+    isTexLoc = gl.getUniformLocation( program, "isTex");
+
+    var vTexCoord = gl.getAttribLocation(program, "vTexCoord");
+    gl.vertexAttribPointer(vTexCoord, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vTexCoord);
+
+      // Lesa inn og skilgreina mynstur fyrir vegg
+    var skjarImage = document.getElementById("skjarImage");
+    texSkjar = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texSkjar);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, skjarImage);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+    gl.uniform1i(gl.getUniformLocation(program, "texture"), 0);
+
 
     matrixLoc = gl.getUniformLocation( program, "rotation" );
 
@@ -136,15 +183,14 @@ function render()
 {
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+    gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer);
+    
+
     var mv = mat4();
     mv = mult( mv, rotateX(spinX) );
     mv = mult( mv, rotateY(spinY) ) ;
 
-    // Screen
-    mv1 = mult( mv, scalem( 1.0, 0.6, 0.05 ) );
-    gl.uniformMatrix4fv(matrixLoc, false, flatten(mv1));
-    gl.drawArrays( gl.TRIANGLES, 0, numVertices );
-
+    gl.uniform1i(isTexLoc, 0);
     // Connection
     mv1 = mult( mv, translate( 0.0, -0.4, 0.0 ) );
     mv1 = mult( mv1, scalem( 0.1, 0.2, 0.05 ) );
@@ -157,6 +203,20 @@ function render()
     gl.uniformMatrix4fv(matrixLoc, false, flatten(mv1));
     gl.drawArrays( gl.TRIANGLES, 0, numVertices );
 
+    // Screen
+    //mv1 = mult( mv, translate( -0.3, 0.0, 0.0 ) );
+    mv1 = mult( mv, scalem( 1.0, 0.6, 0.05 ) );
+    gl.uniformMatrix4fv(matrixLoc, false, flatten(mv1));
+    gl.drawArrays( gl.TRIANGLES, 0, numVertices );
+
+    
+    
+    gl.bindBuffer( gl.ARRAY_BUFFER, texBuffer );
+    gl.uniform1i(isTexLoc, 1);
+    gl.bindTexture(gl.TEXTURE_2D, texSkjar);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+    
     requestAnimFrame( render );
 }
 

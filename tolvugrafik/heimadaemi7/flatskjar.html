@@ -29,7 +29,6 @@ main()
 </script>
 
 <script id="vertex-shader2" type="x-shader/x-vertex">
-  
   // Vertex shader for textured object
   
   attribute  vec4 vPosition;
@@ -42,11 +41,11 @@ main()
   void main()
   {
       fTexCoord = vTexCoord;
-      gl_Position = rotation * vPosition; * vPosition;
+      gl_Position = rotation * vPosition;
   }
-</script>
-
-<script id="fragment-shader2" type="x-shader/x-fragment">
+  </script>
+  
+  <script id="fragment-shader2" type="x-shader/x-fragment">
   // Vertex shader for textured object
   
   precision mediump float;
@@ -66,12 +65,12 @@ main()
 <script type="text/javascript" src="flatskjar.js"></script>
 
 <body>
-  <canvas id="gl-canvas" width="512"" height=" 512"></canvas>
-  <img id="texImage" src="skjar.jpg" hidden></img>
+<canvas id="gl-canvas" width="512"" height="512">
 
+<img id = "skjarImage" src = "./skjar.jpg" hidden></img>
 
-  <br />
+   
+<br/>
 
 </body>
-
 </html>
